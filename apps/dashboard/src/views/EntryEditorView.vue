@@ -11,7 +11,7 @@ const router = useRouter()
 const { entries, fetchEntries, createEntry, updateEntry, publishEntry } = useEntries()
 const { current } = useProjects()
 
-const isNew = computed(() => route.params.id === 'new')
+const isNew = computed(() => route.name === 'entry-new')
 
 const title = ref('')
 const body = ref('')

@@ -20,7 +20,7 @@ const createSchema = z.object({
 
 const updateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  description: z.string().max(500).optional(),
+  description: z.string().max(500).nullable().optional(),
   accentColor: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
@@ -54,7 +54,7 @@ projectRoutes.patch('/:id', async (c) => {
 
   const result = await updateProjectForUser(c.get('userId'), c.req.param('id'), parsed.data)
   if (!result.ok) return c.json({ error: result.error }, result.status as 404)
-  return c.json({})
+  return c.json(result.data)
 })
 
 projectRoutes.delete('/:id', async (c) => {

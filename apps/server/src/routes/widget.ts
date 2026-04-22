@@ -11,7 +11,7 @@ widgetRoutes.get('/:slug/entries', async (c) => {
     id: e.id,
     title: e.title,
     body: e.body,
-    tags: JSON.parse(e.tags) as string[],
+    tags: e.tags,
     publishedAt: e.publishedAt,
   }))
 

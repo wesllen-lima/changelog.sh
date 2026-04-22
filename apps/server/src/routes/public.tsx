@@ -21,9 +21,8 @@ app.get('/:slug/rss.xml', async (c) => {
   const items = entries
     .filter((e) => e.publishedAt)
     .map((e) => {
-      const tags: string[] = parseTagsJson(e.tags)
       const bodyHtml = marked.parse(e.body, { async: false }) as string
-      const categories = tags.map((t) => `<category>${escXml(t)}</category>`).join('')
+      const categories = e.tags.map((t) => `<category>${escXml(t)}</category>`).join('')
       return `
     <item>
       <title>${escXml(e.title)}</title>
@@ -67,18 +66,10 @@ app.get('/:slug', async (c) => {
       projectName={project.name}
       slug={slug}
       accentColor={project.accentColor ?? '#6366f1'}
-      entries={entries.filter((e) => e.publishedAt !== null) as Parameters<typeof ChangelogPage>[0]['entries']}
+      entries={entries.filter((e) => e.publishedAt !== null) as { id: string; title: string; body: string; tags: string[]; publishedAt: string }[]}
     />,
   )
 })
-
-function parseTagsJson(raw: string): string[] {
-  try {
-    return JSON.parse(raw) as string[]
-  } catch {
-    return []
-  }
-}
 
 function escXml(s: string): string {
   return s

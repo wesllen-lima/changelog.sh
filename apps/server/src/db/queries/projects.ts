@@ -13,7 +13,7 @@ export type NewProject = {
 }
 export type ProjectUpdate = {
   name?: string
-  description?: string
+  description?: string | null
   accentColor?: string
 }
 

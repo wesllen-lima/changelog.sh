@@ -46,21 +46,17 @@ export async function updateProjectForUser(
   userId: string,
   id: string,
   data: ProjectUpdate,
-): Promise<Result<void>> {
-  const owned = await isOwner(userId, id)
-  if (!owned) return err('Project not found', 404)
+): Promise<Result<Project>> {
+  const rows = await getProjectsByOwner(db, userId)
+  const project = rows.find((p) => p.id === id)
+  if (!project) return err('Project not found', 404)
   updateProject(db, id, data)
-  return ok(undefined)
+  return ok({ ...project, ...data })
 }
 
 export async function deleteProjectForUser(userId: string, id: string): Promise<Result<void>> {
-  const owned = await isOwner(userId, id)
-  if (!owned) return err('Project not found', 404)
+  const rows = await getProjectsByOwner(db, userId)
+  if (!rows.some((p) => p.id === id)) return err('Project not found', 404)
   deleteProject(db, id)
   return ok(undefined)
-}
-
-async function isOwner(userId: string, projectId: string): Promise<boolean> {
-  const rows = await getProjectsByOwner(db, userId)
-  return rows.some((p) => p.id === projectId)
 }

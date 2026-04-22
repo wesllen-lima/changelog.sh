@@ -22,6 +22,7 @@ const publishing = ref(false)
 const saved = ref(false)
 const publishedOk = ref(false)
 const tagMenuOpen = ref(false)
+const saveError = ref<string | null>(null)
 
 const AVAILABLE_TAGS = ['new', 'fix', 'improvement', 'performance']
 const unusedTags = computed(() => AVAILABLE_TAGS.filter((t) => !tags.value.includes(t)))
@@ -59,6 +60,7 @@ function inlineEscape(s: string) {
 async function handleSaveDraft() {
   if (!current.value || saving.value) return
   saving.value = true
+  saveError.value = null
   try {
     if (isNew.value) {
       const result = await createEntry(current.value.slug, {
@@ -69,13 +71,20 @@ async function handleSaveDraft() {
       if (result.ok) {
         entryId.value = result.data.id
         router.replace(`/entries/${result.data.id}`)
+      } else {
+        saveError.value = result.error
+        return
       }
     } else {
-      await updateEntry(route.params.id as string, {
+      const result = await updateEntry(route.params.id as string, {
         title: title.value,
         body: body.value,
         tags: tags.value,
       })
+      if (!result.ok) {
+        saveError.value = result.error
+        return
+      }
     }
     saved.value = true
     setTimeout(() => (saved.value = false), 2000)
@@ -170,6 +179,10 @@ onMounted(() => {
           v-if="publishedOk"
           style="font-family: var(--font-mono); font-size: 12px; color: var(--accent)"
         >✓ Published!</span>
+        <span
+          v-if="saveError"
+          style="font-family: var(--font-mono); font-size: 12px; color: var(--red)"
+        >{{ saveError }}</span>
         <button
           @click="handleSaveDraft"
           :disabled="saving"

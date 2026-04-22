@@ -58,7 +58,7 @@ entryRoutes.patch('/entries/:id', requireAuth, async (c) => {
     parsed.data,
   )
   if (!result.ok) return c.json({ error: result.error }, result.status as 404 | 403)
-  return c.json({})
+  return c.json(result.data)
 })
 
 entryRoutes.delete('/entries/:id', requireAuth, async (c) => {
@@ -78,7 +78,7 @@ entryRoutes.post('/entries/:id/publish', requireAuth, async (c) => {
     c.get('apiKeyProjectId') ?? null,
   )
   if (!result.ok) return c.json({ error: result.error }, result.status as 404 | 403)
-  return c.json({})
+  return c.json(result.data)
 })
 
 entryRoutes.post('/entries/:id/unpublish', requireAuth, async (c) => {
@@ -88,7 +88,7 @@ entryRoutes.post('/entries/:id/unpublish', requireAuth, async (c) => {
     c.get('apiKeyProjectId') ?? null,
   )
   if (!result.ok) return c.json({ error: result.error }, result.status as 404 | 403)
-  return c.json({})
+  return c.json(result.data)
 })
 
 export default entryRoutes

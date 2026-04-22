@@ -11,8 +11,8 @@ import {
   type NewEntry,
   type EntryUpdate,
 } from '../db/queries/entries'
-import { getProject } from '../db/queries/projects'
 import { getProjectsByOwner } from '../db/queries/projects'
+import { getProject } from '../db/queries/projects'
 import { ok, err, type Result } from '../lib/result'
 
 export async function listEntries(
@@ -53,7 +53,7 @@ export async function updateEntryForCaller(
   callerId: string | null,
   callerProjectId: string | null,
   data: EntryUpdate,
-): Promise<Result<void>> {
+): Promise<Result<Entry>> {
   const entry = await getEntry(db, id)
   if (!entry) return err('Entry not found', 404)
 
@@ -62,7 +62,9 @@ export async function updateEntryForCaller(
   }
 
   updateEntry(db, id, data)
-  return ok(undefined)
+  const updated = await getEntry(db, id)
+  if (!updated) return err('Entry not found', 404)
+  return ok(updated)
 }
 
 export async function deleteEntryForCaller(
@@ -85,7 +87,7 @@ export async function publishEntryForCaller(
   id: string,
   callerId: string | null,
   callerProjectId: string | null,
-): Promise<Result<void>> {
+): Promise<Result<Entry>> {
   const entry = await getEntry(db, id)
   if (!entry) return err('Entry not found', 404)
 
@@ -94,14 +96,16 @@ export async function publishEntryForCaller(
   }
 
   publishEntry(db, id)
-  return ok(undefined)
+  const updated = await getEntry(db, id)
+  if (!updated) return err('Entry not found', 404)
+  return ok(updated)
 }
 
 export async function unpublishEntryForCaller(
   id: string,
   callerId: string | null,
   callerProjectId: string | null,
-): Promise<Result<void>> {
+): Promise<Result<Entry>> {
   const entry = await getEntry(db, id)
   if (!entry) return err('Entry not found', 404)
 
@@ -110,7 +114,9 @@ export async function unpublishEntryForCaller(
   }
 
   unpublishEntry(db, id)
-  return ok(undefined)
+  const updated = await getEntry(db, id)
+  if (!updated) return err('Entry not found', 404)
+  return ok(updated)
 }
 
 async function canWriteProject(

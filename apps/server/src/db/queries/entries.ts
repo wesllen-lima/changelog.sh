@@ -3,7 +3,10 @@ import { newId } from '../../lib/id'
 import { entries } from '../schema'
 import type { DrizzleDb } from '../index'
 
-export type Entry = typeof entries.$inferSelect
+type EntryRow = typeof entries.$inferSelect
+
+export type Entry = Omit<EntryRow, 'tags'> & { tags: string[] }
+
 export type NewEntry = {
   projectId: string
   title: string
@@ -16,6 +19,17 @@ export type EntryUpdate = {
   tags?: string[]
 }
 
+function toEntry(row: EntryRow): Entry {
+  let tags: string[] = []
+  try {
+    const parsed = JSON.parse(row.tags)
+    if (Array.isArray(parsed)) tags = parsed
+  } catch {
+    tags = []
+  }
+  return { ...row, tags }
+}
+
 export async function getEntries(
   db: DrizzleDb,
   projectId: string,
@@ -26,21 +40,23 @@ export async function getEntries(
     : eq(entries.projectId, projectId)
 
   const q = db.select().from(entries).where(where).orderBy(desc(entries.createdAt))
-  return opts.limit ? q.limit(opts.limit) : q
+  const rows = await (opts.limit ? q.limit(opts.limit) : q)
+  return rows.map(toEntry)
 }
 
-export function getEntry(db: DrizzleDb, id: string): Promise<Entry | null> {
-  return db
+export async function getEntry(db: DrizzleDb, id: string): Promise<Entry | null> {
+  const row = await db
     .select()
     .from(entries)
     .where(eq(entries.id, id))
     .limit(1)
     .then((r) => r[0] ?? null)
+  return row ? toEntry(row) : null
 }
 
 export function createEntry(db: DrizzleDb, data: NewEntry): Entry {
   const now = new Date().toISOString()
-  const entry: Entry = {
+  const row: EntryRow = {
     id: newId(),
     projectId: data.projectId,
     title: data.title,
@@ -50,12 +66,12 @@ export function createEntry(db: DrizzleDb, data: NewEntry): Entry {
     createdAt: now,
     updatedAt: now,
   }
-  db.insert(entries).values(entry).run()
-  return entry
+  db.insert(entries).values(row).run()
+  return toEntry(row)
 }
 
 export function updateEntry(db: DrizzleDb, id: string, data: EntryUpdate): void {
-  const set: Partial<Entry> = { updatedAt: new Date().toISOString() }
+  const set: Partial<EntryRow> = { updatedAt: new Date().toISOString() }
   if (data.title !== undefined) set.title = data.title
   if (data.body !== undefined) set.body = data.body
   if (data.tags !== undefined) set.tags = JSON.stringify(data.tags)

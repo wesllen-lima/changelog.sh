@@ -6,7 +6,7 @@ type RawEntry = {
   id: string
   title: string
   body: string
-  tags: string
+  tags: string[]
   publishedAt: string
 }
 
@@ -26,14 +26,6 @@ function renderMarkdown(src: string): string {
       code: ['class'],
     },
   })
-}
-
-function parseTags(raw: string): string[] {
-  try {
-    return JSON.parse(raw) as string[]
-  } catch {
-    return []
-  }
 }
 
 function fmtDate(iso: string): string {
@@ -76,14 +68,13 @@ export const ChangelogPage: FC<Props> = ({ projectName, slug, accentColor, entri
               <p class="empty">No entries published yet.</p>
             ) : (
               entries.map((e) => {
-                const tags = parseTags(e.tags)
                 return (
                   <article id={e.id} key={e.id}>
                     <time datetime={e.publishedAt}>{fmtDate(e.publishedAt)}</time>
                     <h2>{e.title}</h2>
-                    {tags.length > 0 && (
+                    {e.tags.length > 0 && (
                       <div class="tags">
-                        {tags.map((t) => (
+                        {e.tags.map((t) => (
                           <span key={t} class="tag">
                             {t}
                           </span>

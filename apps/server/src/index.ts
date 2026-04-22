@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { config } from './config'
 import { db } from './db'
 import { users } from './db/schema'
-import { auth } from './auth'
+import { auth, magicLinkEnabled } from './auth'
 import { errorHandler } from './middleware/error'
 import { corsMiddleware } from './middleware/cors'
 import projectRoutes from './routes/projects'
@@ -32,7 +32,10 @@ const app = new Hono()
 app.use('/*', corsMiddleware)
 app.onError(errorHandler)
 
-// Auth routes — bypasses Better Auth's CSRF check by calling the internal API directly
+// Public config — lets the dashboard know which features are available
+app.get('/api/config', (c) => c.json({ magicLinkEnabled }))
+
+// Auth routes — bypass Better Auth CSRF by calling internal API directly
 app.post('/api/auth/sign-in/email', async (c) => {
   const body = await c.req.json<{ email: string; password: string }>()
   return auth.api.signInEmail({ body, asResponse: true })
@@ -40,6 +43,14 @@ app.post('/api/auth/sign-in/email', async (c) => {
 
 app.post('/api/auth/sign-out', async (c) => {
   return auth.api.signOut({ headers: c.req.raw.headers, asResponse: true })
+})
+
+app.post('/api/auth/magic-link/send', async (c) => {
+  if (!magicLinkEnabled) return c.json({ error: 'Magic link not configured' }, 501)
+  const body = await c.req.json<{ email: string; callbackURL: string }>()
+  // signInMagicLink is only present when the plugin is loaded; cast is safe here
+  const api = auth.api as Record<string, (opts: unknown) => Promise<Response>>
+  return api['signInMagicLink']({ body, asResponse: true })
 })
 
 app.get('/auth/me', async (c) => {

@@ -10,6 +10,8 @@ const envSchema = z.object({
   DATABASE_AUTH_TOKEN: z.string().optional(),
   ALLOWED_ORIGIN: z.string().optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM: z.string().default('changelog.sh <noreply@changelog.sh>'),
 })
 
 const parsed = envSchema.safeParse(process.env)

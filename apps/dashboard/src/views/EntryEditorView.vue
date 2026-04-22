@@ -59,6 +59,10 @@ function inlineEscape(s: string) {
 
 async function handleSaveDraft() {
   if (!current.value || saving.value) return
+  if (!title.value.trim()) {
+    saveError.value = 'Title is required'
+    return
+  }
   saving.value = true
   saveError.value = null
   try {

@@ -10,9 +10,9 @@ Sprint cadence: **1 week**. Each sprint delivers something runnable. No sprint e
 - [x] pnpm workspaces + `tsconfig.json` per package (`strict: true`, `moduleResolution: bundler`)
 - [x] ESLint flat config + Prettier + lint-staged + husky pre-commit hook
 - [x] GitHub Actions CI: typecheck + lint + test on every PR
-- [x] `.env.example` + `apps/server/src/config.ts` (Zod-validated, throws on missing vars)
-- [x] `apps/server/src/lib/logger.ts` + `apps/server/src/lib/id.ts` (nanoid wrapper)
-- [x] Root `Makefile` + `README.md` skeleton
+- [x] `apps/server/src/config.ts` — Zod-validated env vars, throws on missing
+- [x] `apps/server/src/lib/id.ts` — nanoid wrapper
+- [x] `README.md` com quick start, tabela de surfaces, env vars e stack
 
 ---
 
@@ -20,124 +20,109 @@ Sprint cadence: **1 week**. Each sprint delivers something runnable. No sprint e
 
 - [x] `apps/server/src/db/schema.ts` — tables: `projects`, `entries`, `apiKeys` + Better Auth tables
 - [x] `apps/server/src/db/index.ts` — Bun.sqlite adapter, Drizzle on top
-- [x] `apps/server/src/db/queries/entries.ts` — getEntries, getEntry, createEntry, updateEntry, deleteEntry, publishEntry, unpublishEntry
-- [x] `apps/server/src/db/queries/projects.ts` — getProject, getProjectsByOwner, createProject, updateProject, deleteProject
-- [x] `apps/server/src/db/queries/api-keys.ts` — createApiKey (hash before store), validateApiKey, listApiKeys, revokeApiKey
+- [x] `apps/server/src/db/queries/entries.ts` — CRUD completo + publish/unpublish, tags como `string[]`
+- [x] `apps/server/src/db/queries/projects.ts` — CRUD completo
+- [x] `apps/server/src/db/queries/api-keys.ts` — hash antes de armazenar, validate, list, revoke
 - [x] `bun run db:push` + `bun run db:studio`
-- [x] 29 tests, all passing, in-memory SQLite
+- [x] 29 testes, todos passando, SQLite in-memory
 
 ---
 
 ## Sprint 2 — Server API ✅ CONCLUÍDA (2026-04-21)
 
-- [x] Middleware: error, auth (session + API key fallback), cors
-- [x] Better Auth: email/password, Drizzle adapter, sessions table
-- [x] Routes: auth, projects, entries, api-keys, widget (public)
-- [x] Zod validation on every boundary — rejects with `422`
-- [x] 63 integration tests, all passing
+- [x] Middleware: error handler, auth (session + API key fallback), CORS
+- [x] Better Auth: email/senha + magic link opcional (Resend), Drizzle adapter
+- [x] Bootstrap automático do admin na inicialização (`ADMIN_EMAIL` + `ADMIN_PASSWORD`)
+- [x] Rotas: projects, entries, api-keys, widget (público), config
+- [x] Zod em todas as fronteiras — rejeita com `422`
+- [x] Auth bypass de CSRF via `auth.api.*` interno (sign-in, sign-out, magic link)
+- [x] 63 testes de integração, todos passando
 
 ---
 
 ## Sprint 3 — Public surface + RSS ✅ CONCLUÍDA (2026-04-21)
 
-- [x] `GET /:slug` — SSR changelog page (Hono JSX), markdown rendered server-side
-- [x] `GET /:slug/rss.xml` — valid RSS 2.0 feed
-- [x] `packages/widget/src/index.ts` — Web Component, Shadow DOM, localStorage badge, <4kb (1849 bytes gzipped)
-- [x] Widget build + CI size check + static route with long-lived cache headers
-- [x] 12 tests for public routes
+- [x] `GET /:slug` — página SSR (Hono JSX), markdown renderizado server-side com sanitização
+- [x] `GET /:slug/rss.xml` — RSS 2.0 válido com categorias por tag
+- [x] `packages/widget/src/index.ts` — Web Component, Shadow DOM, badge de não-lidos via localStorage, <4kb gzipped
+- [x] Build do widget + rota estática com cache de longa duração
+- [x] 12 testes para rotas públicas
 
 ---
 
-## Sprint 4 — Dashboard (Claude Design → Vue implementation)
+## Sprint 4 — Dashboard ✅ CONCLUÍDA (2026-04-22)
 
-**Goal:** Admins can create, edit, publish, and delete entries. Dashboard is fully functional and visually complete.
+**Goal:** Admins podem criar, editar, publicar e deletar entries. Dashboard funcional e visualmente completo.
 
-### Step 1 — Claude Design prototype (before writing Vue code)
+- [x] `apps/dashboard/src/styles/tokens.css` — todos os CSS custom properties do design system
+- [x] `useAuth.ts` — sessão, signIn, signOut, sendMagicLink, fetchMe, fetchConfig
+- [x] `useApi.ts` — fetch tipado com `Result<T>`, extração de erros Zod legível
+- [x] `useEntries.ts`, `useProjects.ts`, `useApiKeys.ts` — composables com estado compartilhado
+- [x] Vue Router: `/login`, `/onboarding`, `/entries`, `/entries/new`, `/entries/:id`, `/projects`, `/settings`, `/auth/callback`
+- [x] Auth guard — redireciona não-autenticados para `/login`
+- [x] Onboarding guard — redireciona usuários sem projetos para `/onboarding`
+- [x] `AppLayout.vue` — sidebar 216px, seletor de projeto, nav groups, user card
+- [x] `LoginView.vue` — modo email+senha ou magic link (detectado via `/api/config`)
+- [x] `AuthCallbackView.vue` — recebe redirect do magic link, verifica sessão
+- [x] `OnboardingView.vue` — wizard 2 passos: criar projeto → escrever primeira entry
+- [x] `EntriesView.vue` — tabela com filtros All/Published/Drafts, publish/unpublish inline
+- [x] `EntryEditorView.vue` — título, tag pills com menu, markdown + preview side-by-side, feedback de erro inline
+- [x] `ProjectsView.vue` — tabela com confirmação de delete
+- [x] `SettingsView.vue` — configuração do projeto, snippet de embed com copy, API keys, danger zone
+- [x] `WidgetPreview.vue` — simulação visual do popover do widget com entries reais
+- [x] `TagPill.vue`, `StatusBadge.vue` — componentes reutilizáveis
+- [ ] Unsaved changes warning ao sair do editor sem salvar (`beforeRouteLeave`)
+- [ ] Atalho `⌘+S` salva no editor
 
-Open **claude.ai/design**, point it at this repository, and use this prompt:
+### Acceptance criteria ✅
 
-> "Read CLAUDE.md in this repository. Build the complete admin dashboard for changelog.sh following the design system defined in the Design system section exactly. Build all 6 screens: Login, Entries list, Entry editor, Projects list, Settings, and the WidgetPreview component. Use the color tokens, fonts, and interaction rules from CLAUDE.md. The API contracts are documented in CLAUDE.md — use those exact endpoints for all fetch calls. The shared types are in packages/types/src/index.ts. Output as Vue 3 SFC files with <script setup lang='ts'>, Tailwind v4, and the composable pattern documented in CLAUDE.md."
-
-Iterate on the prototype in Claude Design until all 6 screens look right. Then use **Export → Handoff to Claude Code** to pass to the implementation step.
-
-### Step 2 — Vue implementation tasks
-
-- [ ] `apps/dashboard/src/styles/tokens.css` — all CSS variables from CLAUDE.md design system
-- [ ] `apps/dashboard/src/composables/useAuth.ts` — wraps Better Auth session, exposes `user`, `login()`, `logout()`, `isAuthenticated`
-- [ ] `apps/dashboard/src/composables/useApi.ts` — typed fetch wrapper, attaches session cookie, returns `Result<T>`
-- [ ] Vue Router: `/login`, `/entries`, `/entries/:id`, `/entries/new`, `/projects`, `/settings`
-- [ ] Auth guard — redirects unauthenticated requests to `/login`
-- [ ] `AppLayout.vue` — sidebar + main area shell
-- [ ] `LoginView.vue`
-- [ ] `EntriesView.vue` — list with filter pills, status badges, inline publish/unpublish
-- [ ] `EntryEditorView.vue` — title input, tag pills, markdown + preview split
-- [ ] `MarkdownPreview.vue` — renders markdown via `marked` + `sanitize-html`, styles match public page exactly
-- [ ] `ProjectsView.vue`
-- [ ] `SettingsView.vue` — project config, widget section with embed snippet, API keys, danger zone
-- [ ] `WidgetPreview.vue` — iframe wrapping actual `<changelog-widget>` Web Component
-- [ ] `useClipboard.ts` — copy to clipboard with 2s "✓ Copied" feedback
-- [ ] Unsaved changes warning on editor navigate away (`beforeRouteLeave`)
-- [ ] Keyboard shortcut: `⌘+S` saves in editor
-- [x] **Onboarding screen** — full-page guided wizard for first access: create project → write first entry, shown automatically when no projects exist
-
-### Acceptance criteria
-
-Create an entry, publish it, verify it appears on `GET /:slug`. Unpublish, verify it disappears. Delete, verify DB is clean. No full-page reloads — all actions update state in-place.
+Criar entry, publicar, verificar em `GET /:slug`. Despublicar, verificar que some. Deletar, DB limpo. Sem reloads — estado atualizado in-place.
 
 ---
 
-## Sprint 5 — Dashboard: projects + settings
+## Sprint 5 — Magic link + polish ✅ CONCLUÍDA (2026-04-22)
 
-**Goal:** Users can manage multiple projects and configure the widget.
-
-### Step 1 — Claude Design (continue in same Design session from Sprint 4)
-
-> "Refine the Settings screen to include: live widget preview inside an iframe, one-time API key display banner, accent color picker with hex input, and delete project confirmation modal that requires typing the project slug. Also add the project switcher dropdown in the sidebar."
-
-### Step 2 — Implementation tasks
-
-- [ ] Project selector dropdown in sidebar — `localStorage` persists last selected
-- [ ] Create project modal — name field, slug auto-derived (editable), description, accent color picker
-- [ ] Settings: project section with slug change warning
-- [ ] Settings: API key creation → one-time plaintext banner with copy
-- [ ] Settings: delete project → modal requiring slug confirmation
-- [ ] `WidgetPreview.vue` — iframe renders actual Web Component with real project data
-- [ ] Accent color change → widget preview updates in real time
-
-### Acceptance criteria
-
-Create two projects, switch between them. Change accent color — widget preview updates immediately. Generate API key, copy it, verify it works against `POST /api/projects/:slug/entries`. Revoke the key, verify `401`.
+- [x] Magic link via Resend — opcional, ativado por `RESEND_API_KEY` no `.env`
+- [x] `GET /api/config` — feature flags para o dashboard (`magicLinkEnabled`)
+- [x] Login adapta UI automaticamente: campo de senha some quando magic link está ativo
+- [x] `POST /api/auth/magic-link/send` — bypass CSRF, mesmo padrão do sign-in
+- [x] Email HTML responsivo enviado via Resend com link de acesso
+- [x] Fallback gracioso para email+senha quando `RESEND_API_KEY` não está configurado
 
 ---
 
-## Sprint 6 — Distribution
+## Sprint 6 — Distribuição
 
-**Goal:** Anyone can install changelog.sh in under 2 minutes. GitHub page is ready to ship.
+**Goal:** Qualquer pessoa instala o changelog.sh em menos de 2 minutos.
 
-- [ ] `Dockerfile` multi-stage: dashboard build (node:22-alpine) → server binary (oven/bun:1-alpine) → final image <80MB
+- [ ] `Dockerfile` multi-stage: build do dashboard → binary do servidor → imagem final <80MB
 - [ ] `.dockerignore` + `docker-compose.yml`
-- [ ] `install.sh` — detects OS + arch, downloads binary from GitHub Releases
-- [ ] GitHub Actions `release.yml` — matrix: `linux-amd64`, `linux-arm64`, `darwin-arm64` → binaries as release assets + Docker image to `ghcr.io`
-- [ ] `README.md` final — hero sentence, Docker command, embed snippet, screenshots, comparison table vs Beamer/Headway
+- [ ] `.env.example` com todas as variáveis documentadas
+- [ ] `install.sh` — detecta OS + arch, baixa binary do GitHub Releases
+- [ ] GitHub Actions `release.yml` — matrix: `linux-amd64`, `linux-arm64`, `darwin-arm64` → binaries + Docker image em `ghcr.io`
+- [ ] `README.md` final — screenshots, comparação vs Beamer/Headway, Docker one-liner em destaque
 - [ ] GitHub repo: description, topics (`self-hosted`, `changelog`, `open-source`, `vue`, `hono`, `bun`, `typescript`), social preview image
 
 ### Acceptance criteria
 
-`docker run -p 3456:3456 -v ./data:/data ghcr.io/user/changelog-sh` starts on a machine with only Docker. Binary runs on Linux ARM64. `curl -fsSL changelog.sh/install.sh | sh && changelog serve` works on macOS arm64.
+`docker run -p 3456:3456 -v ./data:/data ghcr.io/user/changelog-sh` funciona numa máquina com só Docker. Binary roda em Linux ARM64. Dashboard abre em `localhost:3456`.
 
 ---
 
-## Backlog (post-v1, evaluate after traction)
+## Backlog (pós-v1, avaliar com tração)
 
-- **Magic link / OAuth** — passwordless sign-in (GitHub, Google) via Better Auth plugins; eliminates ADMIN_PASSWORD env var
-- **CI/CD publish via `curl`** — documented example of posting an entry from a GitHub Actions deploy step using an API key
-- Webhook on entry publish
-- Slack / Discord notification integration
-- Scheduled publish (future `publishedAt`)
-- GitHub Release sync — auto-creates draft entry from Release body
-- `changelog-sh` CLI — `changelog new`, `changelog publish`, `changelog list`
-- Read receipts (privacy-preserving)
-- Team members + roles
-- I18n widget — `data-locale="pt-BR"`
-- Export all entries as Markdown files
-- Cloud version — only after 5k GitHub stars
+- **CI/CD publish via `curl`** — exemplo documentado de publicar uma entry via API key num pipeline de deploy (GitHub Actions, Bitbucket, etc.)
+- **WidgetPreview real** — iframe carregando o Web Component real apontado para o projeto atual
+- **`⌘+S`** no editor + unsaved changes warning
+- **Busca/filtro de texto** na lista de entries
+- **Webhook** on entry publish
+- **Slack / Discord** notification integration
+- **Scheduled publish** — `publishedAt` no futuro
+- **GitHub Release sync** — cria draft entry a partir do body de uma Release
+- **`changelog-sh` CLI** — `changelog new`, `changelog publish`, `changelog list`
+- **Read receipts** (privacy-preserving)
+- **Team members + roles**
+- **I18n widget** — `data-locale="pt-BR"`
+- **Export** — todas as entries como arquivos Markdown
+- **OAuth** — GitHub/Google via Better Auth plugins
+- **Cloud version** — só após 5k GitHub stars

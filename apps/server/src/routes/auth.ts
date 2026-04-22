@@ -9,6 +9,10 @@ authRoutes.get('/me', async (c) => {
   return c.json({ user: session.user })
 })
 
-authRoutes.on(['GET', 'POST'], '/**', (c) => auth.handler(c.req.raw))
+authRoutes.on(['GET', 'POST'], '/**', (c) => {
+  const url = new URL(c.req.raw.url)
+  url.pathname = `/api/auth${url.pathname.replace(/^\/auth/, '')}`
+  return auth.handler(new Request(url.toString(), c.req.raw))
+})
 
 export default authRoutes

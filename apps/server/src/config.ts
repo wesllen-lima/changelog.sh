@@ -5,6 +5,7 @@ const envSchema = z.object({
   DB_PATH: z.string().default('./data/changelog.db'),
   BETTER_AUTH_SECRET: z.string().min(32, 'BETTER_AUTH_SECRET must be at least 32 characters'),
   ADMIN_EMAIL: z.email(),
+  ADMIN_PASSWORD: z.string().min(8),
   DATABASE_URL: z.string().optional(),
   DATABASE_AUTH_TOKEN: z.string().optional(),
   ALLOWED_ORIGIN: z.string().optional(),

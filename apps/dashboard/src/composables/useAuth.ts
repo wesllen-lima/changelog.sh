@@ -35,7 +35,7 @@ export function useAuth(): {
     loading.value = true
     error.value = null
     try {
-      const result = await api.post<{ user: User }>('/auth/sign-in/email', { email, password })
+      const result = await api.post<{ user: User }>('/api/auth/sign-in/email', { email, password })
       if (result.ok) {
         user.value = result.data.user
         await router.push('/entries')
@@ -48,7 +48,7 @@ export function useAuth(): {
   }
 
   async function signOut(): Promise<void> {
-    await api.post('/auth/sign-out')
+    await api.post('/api/auth/sign-out')
     user.value = null
     await router.push('/login')
   }

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import { useProjects } from '../composables/useProjects'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -9,6 +10,11 @@ const router = createRouter({
       name: 'login',
       component: () => import('../views/LoginView.vue'),
       meta: { public: true },
+    },
+    {
+      path: '/onboarding',
+      name: 'onboarding',
+      component: () => import('../views/OnboardingView.vue'),
     },
     {
       path: '/',
@@ -53,6 +59,12 @@ router.beforeEach(async (to) => {
   if (!user.value) {
     const result = await fetchMe()
     if (!result.ok) return '/login'
+  }
+
+  if (to.name !== 'onboarding') {
+    const { projects, fetchProjects } = useProjects()
+    if (projects.value.length === 0) await fetchProjects()
+    if (projects.value.length === 0) return '/onboarding'
   }
 
   return true

@@ -78,6 +78,7 @@ Iterate on the prototype in Claude Design until all 6 screens look right. Then u
 - [ ] `useClipboard.ts` — copy to clipboard with 2s "✓ Copied" feedback
 - [ ] Unsaved changes warning on editor navigate away (`beforeRouteLeave`)
 - [ ] Keyboard shortcut: `⌘+S` saves in editor
+- [x] **Onboarding screen** — full-page guided wizard for first access: create project → write first entry, shown automatically when no projects exist
 
 ### Acceptance criteria
 
@@ -128,6 +129,8 @@ Create two projects, switch between them. Change accent color — widget preview
 
 ## Backlog (post-v1, evaluate after traction)
 
+- **Magic link / OAuth** — passwordless sign-in (GitHub, Google) via Better Auth plugins; eliminates ADMIN_PASSWORD env var
+- **CI/CD publish via `curl`** — documented example of posting an entry from a GitHub Actions deploy step using an API key
 - Webhook on entry publish
 - Slack / Discord notification integration
 - Scheduled publish (future `publishedAt`)

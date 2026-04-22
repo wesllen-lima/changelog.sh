@@ -1,0 +1,8 @@
+{
+  "name": "@changelog-sh/widget",
+  "private": true,
+  "scripts": {
+    "build": "bun run build.ts",
+    "typecheck": "tsc --noEmit"
+  }
+}

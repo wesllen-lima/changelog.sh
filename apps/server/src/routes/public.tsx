@@ -1,0 +1,92 @@
+import { Hono } from 'hono'
+import { listEntries } from '../services/entries'
+import { getProjectBySlug } from '../services/projects'
+import { ChangelogPage } from '../views/changelog-page'
+import { marked } from 'marked'
+
+const app = new Hono()
+
+app.get('/:slug/rss.xml', async (c) => {
+  const { slug } = c.req.param()
+
+  const projectResult = await getProjectBySlug(slug)
+  if (!projectResult.ok) return c.text('Not Found', 404)
+
+  const entriesResult = await listEntries(slug, { publishedOnly: true })
+  const entries = entriesResult.ok ? entriesResult.data : []
+
+  const origin = new URL(c.req.url).origin
+  const project = projectResult.data
+
+  const items = entries
+    .filter((e) => e.publishedAt)
+    .map((e) => {
+      const tags: string[] = parseTagsJson(e.tags)
+      const bodyHtml = marked.parse(e.body, { async: false }) as string
+      const categories = tags.map((t) => `<category>${escXml(t)}</category>`).join('')
+      return `
+    <item>
+      <title>${escXml(e.title)}</title>
+      <link>${origin}/${slug}</link>
+      <guid isPermaLink="false">${e.id}</guid>
+      <pubDate>${new Date(e.publishedAt!).toUTCString()}</pubDate>
+      ${categories}
+      <description><![CDATA[${bodyHtml}]]></description>
+    </item>`
+    })
+    .join('')
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>${escXml(project.name)} Changelog</title>
+    <link>${origin}/${slug}</link>
+    <description>Changelog for ${escXml(project.name)}</description>
+    <language>en</language>
+    <atom:link href="${origin}/${slug}/rss.xml" rel="self" type="application/rss+xml"/>
+    ${items}
+  </channel>
+</rss>`
+
+  return c.body(xml, 200, { 'Content-Type': 'application/rss+xml; charset=utf-8' })
+})
+
+app.get('/:slug', async (c) => {
+  const { slug } = c.req.param()
+
+  const projectResult = await getProjectBySlug(slug)
+  if (!projectResult.ok) return c.text('Not Found', 404)
+
+  const entriesResult = await listEntries(slug, { publishedOnly: true })
+  const entries = entriesResult.ok ? entriesResult.data : []
+
+  const project = projectResult.data
+
+  return c.html(
+    <ChangelogPage
+      projectName={project.name}
+      slug={slug}
+      accentColor={project.accentColor ?? '#6366f1'}
+      entries={entries.filter((e) => e.publishedAt !== null) as Parameters<typeof ChangelogPage>[0]['entries']}
+    />,
+  )
+})
+
+function parseTagsJson(raw: string): string[] {
+  try {
+    return JSON.parse(raw) as string[]
+  } catch {
+    return []
+  }
+}
+
+function escXml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
+export default app

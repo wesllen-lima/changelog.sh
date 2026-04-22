@@ -1,5 +1,5 @@
 {
-  "name": "@changelog-sh/types",
+  "name": "@changelog/types",
   "private": true,
   "main": "src/index.ts"
 }

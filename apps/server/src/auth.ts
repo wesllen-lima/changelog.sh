@@ -7,6 +7,7 @@ import { users, sessions, accounts, verifications } from './db/schema'
 export const auth = betterAuth({
   secret: config.BETTER_AUTH_SECRET,
   baseURL: `http://localhost:${config.PORT}`,
+  trustedOrigins: ['http://localhost:5173'],
   database: drizzleAdapter(db, {
     provider: 'sqlite',
     schema: {

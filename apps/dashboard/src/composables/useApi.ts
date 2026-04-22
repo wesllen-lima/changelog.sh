@@ -19,10 +19,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<Result<
   }
 
   if (!res.ok) {
-    const msg =
-      typeof body === 'object' && body !== null && 'message' in body
-        ? String((body as Record<string, unknown>).message)
-        : 'Request failed'
+    const b = typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {}
+    const msg = String(b.message ?? b.error ?? 'Request failed')
     return { ok: false, error: msg, status: res.status }
   }
 

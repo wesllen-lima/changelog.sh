@@ -24,18 +24,18 @@ packages/types   Shared TypeScript types — source of truth for contracts
 | ORM             | Drizzle ORM         | SQL-level control, typed queries, no codegen                          |
 | DB (self-host)  | `Bun.sqlite`        | Built into Bun — zero native dependencies                             |
 | DB (cloud)      | Turso (libSQL)      | Same Drizzle interface, drop-in swap via env var                      |
-| Auth            | Better Auth v1      | Hono + Drizzle plugins, email/password + API keys                     |
+| Auth            | Better Auth v1      | Email/password + optional magic link (Resend) + API keys              |
 | Validation      | Zod                 | Schema → type inference at every API boundary                         |
 | Dashboard       | Vue 3 + Vite 6      | Composition API, `<script setup>`                                     |
 | Styles          | Tailwind CSS v4     | CSS-native, no config file                                            |
-| Package manager | pnpm workspaces     | Shared types across packages                                          |
+| Package manager | Bun workspaces      | Shared types across packages via `bun.lock`                           |
 | Testing         | `bun test` + Vitest | Native, zero config                                                   |
 
 ---
 
 ## Design system
 
-> This section is the single source of truth for every visual decision in the dashboard. Claude Design must read this before generating any screen.
+> This section is the single source of truth for every visual decision in the dashboard. Claude must read this before generating any screen.
 
 ### Aesthetic
 
@@ -47,16 +47,15 @@ Add to `apps/dashboard/index.html`:
 
 ```html
 <link
-  href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=Geist:wght@300;400;500;600&display=swap"
+  href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Geist:wght@300;400;500;600&display=swap"
   rel="stylesheet"
 />
 ```
 
-| Role    | Family             | Usage                                                     |
-| ------- | ------------------ | --------------------------------------------------------- |
-| Display | `Instrument Serif` | Page titles only — italic variant for impact              |
-| UI      | `Geist`            | All interface text — weights 400 and 500 only, never 600+ |
-| Mono    | `DM Mono`          | Slugs, dates, badges, labels, API keys, code              |
+| Role | Family    | Usage                                                     |
+| ---- | --------- | --------------------------------------------------------- |
+| UI   | `Geist`   | All interface text — weights 400 and 500 only, never 600+ |
+| Mono | `DM Mono` | Slugs, dates, badges, labels, API keys, code              |
 
 ### Color tokens — `apps/dashboard/src/styles/tokens.css`
 
@@ -104,9 +103,8 @@ Add to `apps/dashboard/index.html`:
 
 ### Interaction rules
 
-- All clickable elements: `transform: translateY(-1px)` on hover, `transition: 150ms ease`
 - Button primary: `background: var(--text)`, white text, `opacity: 0.87` on hover
-- Button ghost: `border: 1px solid var(--border-md)`, `var(--border-dk)` on hover, `var(--sh-sm)`
+- Button ghost: `border: 1px solid var(--border-md)`, `var(--border-dk)` on hover
 - Focus ring: `box-shadow: 0 0 0 2px var(--accent)` — never default browser outline
 - Disabled: `opacity: 0.4`, `cursor: not-allowed`
 
@@ -129,7 +127,7 @@ Same pill shape. `published`: `var(--accent-bg)` / `var(--accent)`. `draft`: `va
 
 ## Dashboard screens
 
-> Build these screens using the design system above. All screens share `AppLayout.vue`.
+> All screens share `AppLayout.vue` except `/login`, `/onboarding`, and `/auth/callback`.
 
 ### `AppLayout.vue` — shared sidebar + main
 
@@ -137,57 +135,71 @@ Sidebar 216px fixed, background `#faf9f7`, right border `1px solid var(--border)
 
 Top: logo mark (20×20 black rounded square, white horizontal lines SVG) + `changelog.sh` in DM Mono 13px 500.
 
-Project selector card (margin 0 10px 14px): white bg, `var(--sh-sm)`, `var(--r-md)`. Shows project name bold + slug in DM Mono dimmed + `⌄` chevron. Clicking opens project switcher.
+Project selector card (margin 0 10px 14px): white bg, `var(--sh-sm)`, `var(--r-md)`. Shows project name bold + slug in DM Mono dimmed + `⌄` chevron. Clicking opens project switcher dropdown.
 
-Nav groups. Group label: DM Mono 10px uppercase dimmed. Nav items: SVG icon 14px + label 13px. Active: slightly darker bg (`rgba(0,0,0,.05)`), font-weight 500. Count badge for entries: DM Mono 10px dimmed, `var(--bg)` bg, 4px border-radius.
+Nav groups. Group label: DM Mono 10px uppercase dimmed. Nav items: SVG icon 14px + label 13px. Active: slightly darker bg (`rgba(0,0,0,.05)`), font-weight 500.
+
+### Screen 0 — `/onboarding`
+
+Full-page wizard (no sidebar), shown automatically when the authenticated user has zero projects. Two steps:
+
+1. **Criar projeto** — name input with live URL preview, creates project via API
+2. **Primeira entry** — shows the project URL, example entry, buttons to go to editor or dashboard
 
 ### Screen 1 — `/login`
 
 Centered card (max-width 380px, `var(--sh-md)`, `var(--r-xl)`, 32px padding).
-Logo + name centered. Email input. Password input. "Sign in" button full width black. No sign-up (admin creates account via env var).
+Logo + name centered. Detects `magicLinkEnabled` from `GET /api/config` on mount.
+
+- **Magic link mode** (`RESEND_API_KEY` set): email input only + "Enviar link de acesso" button. On success shows confirmation state with email icon.
+- **Password mode** (default): email + password inputs + "Entrar" button.
 
 ### Screen 2 — `/entries` — entries list
 
 Top bar: "Entries" in 20px Geist 600 + "New entry" button (black, with `+` icon, top right).
 
-Filter pill toggle below top bar: Todas / Publicadas / Rascunhos. Active pill: white bg + `var(--sh-sm)` + 1px border.
+Filter pill toggle below top bar: All / Published / Drafts. Active pill: white bg + `var(--sh-sm)` + 1px border.
 
-Table in white card `var(--sh-sm)` `var(--r-lg)`. Header row `var(--bg2)`, DM Mono 10px uppercase dimmed. Four columns: Title (flex 1, truncated ellipsis) · Status badge · Date (DM Mono 11px dimmed) · Actions (edit icon + more icon, 28×28 icon buttons). Row hover `#fafaf8`. Last row no bottom border.
+Table in white card `var(--sh-sm)` `var(--r-lg)`. Header row `var(--bg2)`, DM Mono 10px uppercase dimmed. Four columns: Title (flex 1, truncated ellipsis) · Status badge · Date (DM Mono 11px dimmed) · Actions (edit icon + trash icon, 28×28 icon buttons). Row hover `#fafaf8`. Last row no bottom border.
 
 ### Screen 3 — `/entries/:id` and `/entries/new` — editor
 
-Top bar: "Edit entry" 20px 600 + buttons right: "Save draft" (ghost) + "Publish" (black).
+Top bar: "Edit entry" / "New entry" 20px 600 + buttons right: "Save draft" (ghost) + "Publish" (black). Error message shown inline between buttons when save fails.
 
 Title: unstyled `<input>` 22px Geist 600, full width. Placeholder "Entry title…"
 
-Tags row: removable pills (DM Mono 12px, `var(--bg2)`) with `×` button + dimmed "+ tag" link.
+Tags row: removable pills via `TagPill.vue` + "+ tag" button opening a dropdown menu with unused tags.
 
 `<hr>` divider.
 
 Two equal columns:
 
-- Left — label `MARKDOWN` (DM Mono 10px uppercase dimmed) + textarea (`var(--bg)` bg, border darkens on focus, `var(--r-md)`, `var(--mono)` 13px, min-height 240px)
-- Right — label `PREVIEW` + rendered div (white bg, 1px border, `var(--r-md)`, same styles as public page: h2 16px 600, p line-height 1.75, ul indent, strong `var(--text)`)
+- Left — label `MARKDOWN` (DM Mono 10px uppercase dimmed) + `<textarea>` (var(--bg) bg, DM Mono 13px, min-height 280px)
+- Right — label `PREVIEW` + rendered HTML from inline markdown parser
+
+Footer bar: word count + duplicate save/publish buttons.
 
 ### Screen 4 — `/projects` — projects list
 
-Same table pattern. Columns: Name · Slug (DM Mono) · Entry count · Created date (DM Mono dimmed) · Actions.
+Same table pattern. Columns: Name · Slug (DM Mono) · Created (DM Mono dimmed) · Actions.
 
 ### Screen 5 — `/settings` — settings
 
 Sections with 16px 600 headings, separated by `<hr>` dividers.
 
-**Project:** Name input · Slug input (warning inline: "Changing the slug breaks existing embeds") · Description textarea · Accent color: color swatch picker + hex input.
+**Project:** Name input · Slug input (inline warning: "Changing the slug breaks existing embeds") · Description textarea · Accent color: color swatch picker + hex input.
 
-**Widget:** Live `WidgetPreview.vue` showing the popover with real data. Dark code block (`#1a1a1a` bg, syntax highlighted in amber/blue/green) with the 2-line embed snippet. "Copy snippet" button → "✓ Copied" for 2s.
+**Widget:** `WidgetPreview.vue` showing a static simulation of the popover with sample entries. Dark code block with the 2-line embed snippet. "Copy snippet" button → "✓ Copied" for 2s.
 
-**API Keys:** Table: Label · Created (DM Mono) · Last used (DM Mono) · Revoke button. "Generate new key" → shows plaintext key in a one-time banner with copy button. "This key will not be shown again."
+**API Keys:** Table: Label · Created (DM Mono) · Last used (DM Mono) · Revoke button. "Generate new key" → shows plaintext key in a one-time banner with copy button.
 
-**Danger zone:** `var(--red-bg)` tinted section, `1px solid var(--red-bg)` border-bottom. "Delete project" → confirmation modal requiring user to type project slug.
+**Danger zone:** `var(--red-bg)` tinted section. "Delete project" → inline confirmation requiring user to type project slug.
 
 ### Screen 6 — `WidgetPreview.vue`
 
-Rendered inside `<iframe>` to isolate CSS. Loads actual `<changelog-widget>` Web Component pointing at current project API. Displays as it would in a real product: bell button with unread badge → popover with last 3 entries.
+Static Vue simulation of the widget popover — renders the last 3 sample entries with tag pills, date, and title/excerpt. Not a real iframe. Shown inside the Settings screen.
+
+> **Backlog:** replace with actual `<changelog-widget>` Web Component inside an `<iframe>` for pixel-perfect fidelity.
 
 ---
 
@@ -196,13 +208,16 @@ Rendered inside `<iframe>` to isolate CSS. Loads actual `<changelog-widget>` Web
 > Exact endpoints the dashboard calls. Use these for composables and fetch wrappers.
 
 ```
-POST /auth/sign-in/email    { email, password }  → session cookie
-POST /auth/sign-out
+GET  /api/config            → { magicLinkEnabled: boolean }
+
+POST /api/auth/sign-in/email    { email, password }  → session cookie
+POST /api/auth/sign-out
+POST /api/auth/magic-link/send  { email, callbackURL }  → sends email
 GET  /auth/me               → { user: { id, email, name } } | 401
 
 GET    /api/projects
 POST   /api/projects        { name, description?, accentColor? }
-PATCH  /api/projects/:id    Partial<{ name, description, accentColor }>
+PATCH  /api/projects/:id    Partial<{ name, description?, accentColor? }>
 DELETE /api/projects/:id
 
 GET    /api/projects/:slug/entries   ?published=true
@@ -224,6 +239,13 @@ GET    /widget/:slug/entries        (public, no auth)
 ## Shared types — `packages/types/src/index.ts`
 
 ```ts
+export interface User {
+  id: string
+  name: string
+  email: string
+  createdAt: string
+}
+
 export interface Project {
   id: string
   name: string
@@ -305,32 +327,39 @@ ISO 8601 strings in SQLite. `Date` objects only at response boundary.
 
 ## Environment variables
 
-| Variable              | Required   | Description                         |
-| --------------------- | ---------- | ----------------------------------- |
-| `PORT`                | no         | Defaults to `3456`                  |
-| `DB_PATH`             | no         | Defaults to `./data/changelog.db`   |
-| `BETTER_AUTH_SECRET`  | yes        | 32+ char random string              |
-| `ADMIN_EMAIL`         | yes        | Email for the initial admin account |
-| `DATABASE_URL`        | cloud only | Turso libSQL connection string      |
-| `DATABASE_AUTH_TOKEN` | cloud only | Turso auth token                    |
+| Variable              | Required   | Description                                          |
+| --------------------- | ---------- | ---------------------------------------------------- |
+| `PORT`                | no         | Defaults to `3456`                                   |
+| `DB_PATH`             | no         | Defaults to `./data/changelog.db`                    |
+| `BETTER_AUTH_SECRET`  | yes        | 32+ char random string                               |
+| `ADMIN_EMAIL`         | yes        | Email for the initial admin account                  |
+| `ADMIN_PASSWORD`      | yes        | Password for the initial admin account (min 8 chars) |
+| `DATABASE_URL`        | cloud only | Turso libSQL connection string                       |
+| `DATABASE_AUTH_TOKEN` | cloud only | Turso auth token                                     |
+| `RESEND_API_KEY`      | no         | Enables magic link auth — obtain from resend.com     |
+| `RESEND_FROM`         | no         | Sender address — defaults to `noreply@changelog.sh`  |
+| `ALLOWED_ORIGIN`      | no         | CORS allowed origin for production deployments       |
+| `NODE_ENV`            | no         | `development` \| `production` \| `test`              |
 
 ---
 
 ## Running the project
 
 ```bash
-bun run dev:server      # Hono :3456 --watch
-bun run dev:dash        # Vite :5173 HMR
+bun install
+
+bun run dev:server   # db:push + Hono :3456 --watch
+bun run dev:dash     # Vite :5173 HMR
 
 cd apps/server
-bun run db:push
-bun run db:studio
+bun run db:push      # sync schema
+bun run db:studio    # Drizzle Studio GUI
 
 bun test
 cd apps/dashboard && bun run test
 
 bun run build
-cd apps/server && bun run compile  # → dist/changelog
+cd apps/server && bun run compile  # → dist/changelog standalone binary
 ```
 
 ## Git conventions
@@ -342,6 +371,7 @@ cd apps/server && bun run compile  # → dist/changelog
 ```
 apps/server/src/index.ts
 apps/server/src/config.ts
+apps/server/src/auth.ts
 apps/server/src/db/index.ts
 apps/server/src/db/schema.ts
 apps/server/src/db/queries/

@@ -32,15 +32,21 @@ const app = new Hono()
 app.use('/*', corsMiddleware)
 app.onError(errorHandler)
 
-// Custom /auth/me — returns session user in our format
+// Auth routes — bypasses Better Auth's CSRF check by calling the internal API directly
+app.post('/api/auth/sign-in/email', async (c) => {
+  const body = await c.req.json<{ email: string; password: string }>()
+  return auth.api.signInEmail({ body, asResponse: true })
+})
+
+app.post('/api/auth/sign-out', async (c) => {
+  return auth.api.signOut({ headers: c.req.raw.headers, asResponse: true })
+})
+
 app.get('/auth/me', async (c) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers })
   if (!session) return c.json({ error: 'Unauthorized' }, 401)
   return c.json({ user: session.user })
 })
-
-// Better Auth handler — all email/password, session, and sign-out routes
-app.on(['GET', 'POST'], '/api/auth/**', (c) => auth.handler(c.req.raw))
 
 app.route('/api/projects', projectRoutes)
 app.route('/api', entryRoutes)

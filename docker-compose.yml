@@ -1,0 +1,17 @@
+services:
+  changelog:
+    image: ghcr.io/your-org/changelog-sh:latest
+    ports:
+      - "3456:3456"
+    volumes:
+      - ./data:/data
+    environment:
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in .env}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?set ADMIN_EMAIL in .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      # Uncomment and set for magic link auth:
+      # RESEND_API_KEY: ${RESEND_API_KEY}
+      # RESEND_FROM: ${RESEND_FROM:-changelog.sh <noreply@yourdomain.com>}
+      # Required if running behind a reverse proxy:
+      # ALLOWED_ORIGIN: https://changelog.yourdomain.com
+    restart: unless-stopped

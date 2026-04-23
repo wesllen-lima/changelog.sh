@@ -38,7 +38,10 @@ const plugins = config.RESEND_API_KEY
 export const auth = betterAuth({
   secret: config.BETTER_AUTH_SECRET,
   baseURL: `http://localhost:${config.PORT}`,
-  trustedOrigins: ['http://localhost:5173'],
+  trustedOrigins: [
+    'http://localhost:5173',
+    ...(config.ALLOWED_ORIGIN ? [config.ALLOWED_ORIGIN] : []),
+  ],
   database: drizzleAdapter(db, {
     provider: 'sqlite',
     schema: {

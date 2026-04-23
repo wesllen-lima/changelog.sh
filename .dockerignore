@@ -1,0 +1,13 @@
+.git
+.gitignore
+node_modules
+dist
+*.md
+.env
+.env.local
+apps/*/node_modules
+apps/dashboard/dist
+packages/*/node_modules
+packages/widget/dist
+.husky
+eslint.config.ts

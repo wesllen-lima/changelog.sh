@@ -71,8 +71,8 @@ Sprint cadence: **1 week**. Each sprint delivers something runnable. No sprint e
 - [x] `SettingsView.vue` — configuração do projeto, snippet de embed com copy, API keys, danger zone
 - [x] `WidgetPreview.vue` — simulação visual do popover do widget com entries reais
 - [x] `TagPill.vue`, `StatusBadge.vue` — componentes reutilizáveis
-- [ ] Unsaved changes warning ao sair do editor sem salvar (`beforeRouteLeave`)
-- [ ] Atalho `⌘+S` salva no editor
+- [x] Unsaved changes warning ao sair do editor sem salvar (`beforeRouteLeave`)
+- [x] Atalho `⌘+S` / `Ctrl+S` salva no editor
 
 ### Acceptance criteria ✅
 
@@ -91,17 +91,17 @@ Criar entry, publicar, verificar em `GET /:slug`. Despublicar, verificar que som
 
 ---
 
-## Sprint 6 — Distribuição
+## Sprint 6 — Distribuição ✅ CONCLUÍDA (2026-04-22)
 
 **Goal:** Qualquer pessoa instala o changelog.sh em menos de 2 minutos.
 
-- [ ] `Dockerfile` multi-stage: build do dashboard → binary do servidor → imagem final <80MB
-- [ ] `.dockerignore` + `docker-compose.yml`
-- [ ] `.env.example` com todas as variáveis documentadas
-- [ ] `install.sh` — detecta OS + arch, baixa binary do GitHub Releases
-- [ ] GitHub Actions `release.yml` — matrix: `linux-amd64`, `linux-arm64`, `darwin-arm64` → binaries + Docker image em `ghcr.io`
-- [ ] `README.md` final — screenshots, comparação vs Beamer/Headway, Docker one-liner em destaque
-- [ ] GitHub repo: description, topics (`self-hosted`, `changelog`, `open-source`, `vue`, `hono`, `bun`, `typescript`), social preview image
+- [x] `Dockerfile` multi-stage: build do dashboard → binary do servidor → imagem final <80MB
+- [x] `.dockerignore` + `docker-compose.yml`
+- [x] `.env.example` com todas as variáveis documentadas
+- [x] `install.sh` — detecta OS + arch, baixa binary do GitHub Releases
+- [x] GitHub Actions `release.yml` — matrix: `linux-amd64`, `linux-arm64`, `darwin-arm64` → binaries + Docker image em `ghcr.io`
+- [x] `README.md` final — screenshots placeholder, comparação vs Beamer/Headway, Docker one-liner em destaque
+- [ ] GitHub repo: description, topics (`self-hosted`, `changelog`, `open-source`, `vue`, `hono`, `bun`, `typescript`), social preview image (manual)
 
 ### Acceptance criteria
 

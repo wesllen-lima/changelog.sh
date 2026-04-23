@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import TagPill from '../components/TagPill.vue'
 import { useEntries } from '../composables/useEntries'
@@ -8,7 +8,7 @@ import { useProjects } from '../composables/useProjects'
 
 const route = useRoute()
 const router = useRouter()
-const { entries, fetchEntries, createEntry, updateEntry, publishEntry } = useEntries()
+const { entries, createEntry, updateEntry, publishEntry } = useEntries()
 const { current } = useProjects()
 
 const isNew = computed(() => route.name === 'entry-new')
@@ -23,6 +23,21 @@ const saved = ref(false)
 const publishedOk = ref(false)
 const tagMenuOpen = ref(false)
 const saveError = ref<string | null>(null)
+
+type Snapshot = { title: string; body: string; tags: string[] }
+const lastSaved = ref<Snapshot | null>(null)
+
+const isDirty = computed(() => {
+  if (isNew.value && !entryId.value) {
+    return title.value.trim() !== '' || body.value.trim() !== ''
+  }
+  if (!lastSaved.value) return false
+  return (
+    title.value !== lastSaved.value.title ||
+    body.value !== lastSaved.value.body ||
+    JSON.stringify(tags.value) !== JSON.stringify(lastSaved.value.tags)
+  )
+})
 
 const AVAILABLE_TAGS = ['new', 'fix', 'improvement', 'performance']
 const unusedTags = computed(() => AVAILABLE_TAGS.filter((t) => !tags.value.includes(t)))
@@ -57,6 +72,10 @@ function inlineEscape(s: string) {
   return r
 }
 
+function snapshotCurrent(): Snapshot {
+  return { title: title.value, body: body.value, tags: [...tags.value] }
+}
+
 async function handleSaveDraft() {
   if (!current.value || saving.value) return
   if (!title.value.trim()) {
@@ -74,6 +93,7 @@ async function handleSaveDraft() {
       })
       if (result.ok) {
         entryId.value = result.data.id
+        lastSaved.value = snapshotCurrent()
         router.replace(`/entries/${result.data.id}`)
       } else {
         saveError.value = result.error
@@ -89,6 +109,7 @@ async function handleSaveDraft() {
         saveError.value = result.error
         return
       }
+      lastSaved.value = snapshotCurrent()
     }
     saved.value = true
     setTimeout(() => (saved.value = false), 2000)
@@ -96,6 +117,19 @@ async function handleSaveDraft() {
     saving.value = false
   }
 }
+
+function onKeyDown(e: KeyboardEvent) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+    e.preventDefault()
+    handleSaveDraft()
+  }
+}
+
+onBeforeRouteLeave(() => {
+  if (isDirty.value) {
+    return window.confirm('You have unsaved changes. Leave without saving?')
+  }
+})
 
 async function handlePublish() {
   await handleSaveDraft()
@@ -114,6 +148,7 @@ async function handlePublish() {
 }
 
 onMounted(() => {
+  window.addEventListener('keydown', onKeyDown)
   if (!isNew.value) {
     const id = route.params.id as string
     const entry = entries.value.find((e) => e.id === id)
@@ -122,8 +157,13 @@ onMounted(() => {
       body.value = entry.body
       tags.value = [...entry.tags]
       entryId.value = entry.id
+      lastSaved.value = snapshotCurrent()
     }
   }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeyDown)
 })
 </script>
 
@@ -427,7 +467,7 @@ onMounted(() => {
       "
     >
       <span style="font-family: var(--font-mono); font-size: 11px; color: var(--dimmed)">
-        {{ wordCount }} words · Markdown supported
+        {{ wordCount }} words · Markdown · ⌘S to save
       </span>
       <div style="display: flex; gap: 8px">
         <button

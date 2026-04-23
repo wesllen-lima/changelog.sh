@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="${REPO:-your-org/changelog-sh}"
+REPO="${REPO:-wesllen-lima/changelog-sh}"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 BINARY="changelog"
 

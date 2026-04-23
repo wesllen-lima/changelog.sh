@@ -9,7 +9,7 @@ docker run -p 3456:3456 -v ./data:/data \
   -e BETTER_AUTH_SECRET=your-32-char-secret \
   -e ADMIN_EMAIL=you@example.com \
   -e ADMIN_PASSWORD=yourpassword \
-  ghcr.io/your-org/changelog-sh:latest
+  ghcr.io/wesllen-lima/changelog-sh:latest
 ```
 
 Then open `http://localhost:3456` and start publishing.
@@ -82,8 +82,8 @@ The widget fetches entries from your server, renders a "What's new" popover, and
 ## Deploy with Docker Compose
 
 ```bash
-curl -O https://raw.githubusercontent.com/your-org/changelog-sh/main/docker-compose.yml
-curl -O https://raw.githubusercontent.com/your-org/changelog-sh/main/.env.example
+curl -O https://raw.githubusercontent.com/wesllen-lima/changelog-sh/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/wesllen-lima/changelog-sh/main/.env.example
 cp .env.example .env
 # Edit .env — set BETTER_AUTH_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
 docker compose up -d
@@ -94,7 +94,7 @@ docker compose up -d
 ## Install binary (no Docker)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/your-org/changelog-sh/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/wesllen-lima/changelog-sh/main/install.sh | bash
 ```
 
 Supports Linux x64, Linux arm64, macOS arm64. Then:
@@ -169,7 +169,7 @@ Create an API key in **Settings → API Keys** and use it in your deploy pipelin
 ## Development
 
 ```bash
-git clone https://github.com/your-org/changelog-sh
+git clone https://github.com/wesllen-lima/changelog-sh
 cd changelog-sh
 bun install
 

@@ -1,6 +1,6 @@
 services:
   changelog:
-    image: ghcr.io/your-org/changelog-sh:latest
+    image: ghcr.io/wesllen-lima/changelog-sh:latest
     ports:
       - "3456:3456"
     volumes:

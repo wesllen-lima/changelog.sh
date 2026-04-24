@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useProjects } from '../composables/useProjects'
+import { useTheme } from '../composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
 const { user, signOut } = useAuth()
 const { projects, current, fetchProjects, setCurrentProject } = useProjects()
+const { isDark, toggle: toggleTheme } = useTheme()
 
 const projectMenuOpen = ref(false)
 const cmdHintVisible = ref(false)
+
+const serverBase = import.meta.env.DEV ? 'http://localhost:3456' : ''
+const publicChangelogUrl = computed(() =>
+  current.value ? `${serverBase}/${current.value.slug}` : null,
+)
 
 onMounted(() => {
   fetchProjects()
@@ -40,7 +47,7 @@ const navGroups = [
   },
 ]
 
-function isActive(path: string) {
+function isActive(path: string): boolean {
   return route.path.startsWith(path)
 }
 
@@ -471,8 +478,8 @@ function goToProjects(): void {
         <!-- Public changelog link -->
         <div style="margin-top: 4px; padding: 0 8px">
           <a
-            v-if="current"
-            :href="`/${current.slug}`"
+            v-if="publicChangelogUrl"
+            :href="publicChangelogUrl"
             target="_blank"
             rel="noopener"
             style="
@@ -588,6 +595,61 @@ function goToProjects(): void {
             {{ user?.email ?? '' }}
           </div>
         </div>
+        <!-- Theme toggle -->
+        <button
+          @click="toggleTheme"
+          :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+          style="
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--dimmed);
+            padding: 4px;
+            border-radius: 4px;
+          "
+          @mouseover="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--muted)')"
+          @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--dimmed)')"
+        >
+          <!-- Sun (light mode icon) -->
+          <svg
+            v-if="isDark"
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+          >
+            <circle
+              cx="7"
+              cy="7"
+              r="2.5"
+              stroke="currentColor"
+              stroke-width="1.3"
+            />
+            <path
+              d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.9 2.9l1.1 1.1M10 10l1.1 1.1M2.9 11.1L4 10M10 4l1.1-1.1"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linecap="round"
+            />
+          </svg>
+          <!-- Moon (dark mode icon) -->
+          <svg
+            v-else
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+          >
+            <path
+              d="M11.5 8A5 5 0 016 2.5a5 5 0 100 9 5 5 0 005.5-3.5z"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+
         <button
           @click="signOut"
           title="Sign out"

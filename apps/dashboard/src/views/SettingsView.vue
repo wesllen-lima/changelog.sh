@@ -206,132 +206,160 @@ function cancelDelete(): void {
       </div>
     </div>
 
-    <div style="flex: 1; overflow: auto; padding: 28px; max-width: 760px">
-      <!-- ── Project ── -->
+    <div style="flex: 1; overflow: auto; padding: 28px 32px">
+      <!-- ── Project — two-column grid ── -->
       <section style="margin-bottom: 36px">
-        <h2 style="font-size: 15px; font-weight: 600; margin-bottom: 16px">
-          Project
-        </h2>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+          "
+        >
+          <h2 style="font-size: 15px; font-weight: 600">
+            Project
+          </h2>
+        </div>
 
-        <div style="display: flex; flex-direction: column; gap: 14px">
-          <!-- Name -->
-          <div>
-            <label
-              style="
-                display: block;
-                font-size: 12px;
-                font-weight: 500;
-                color: var(--muted);
-                margin-bottom: 5px;
-              "
-            >Name</label>
-            <input
-              v-model="form.name"
-              placeholder="My App"
-              :style="inputStyle"
-              @focus="focusInput"
-              @blur="blurInput"
-            >
-          </div>
-
-          <!-- Slug (read-only display + warning) -->
-          <div>
-            <label
-              style="
-                display: block;
-                font-size: 12px;
-                font-weight: 500;
-                color: var(--muted);
-                margin-bottom: 5px;
-              "
-            >Slug</label>
-            <input
-              :value="form.slug"
-              disabled
-              :style="{ ...inputStyle, opacity: '0.6', cursor: 'not-allowed' }"
-            >
-            <p
-              style="
-                font-size: 12px;
-                color: var(--amber);
-                margin-top: 5px;
-                display: flex;
-                align-items: center;
-                gap: 5px;
-              "
-            >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 12 12"
-                fill="none"
+        <div style="display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start">
+          <!-- Left: form fields -->
+          <div style="display: flex; flex-direction: column; gap: 14px">
+            <!-- Name -->
+            <div>
+              <label
+                style="
+                  display: block;
+                  font-size: 12px;
+                  font-weight: 500;
+                  color: var(--muted);
+                  margin-bottom: 5px;
+                "
+              >Name</label>
+              <input
+                v-model="form.name"
+                placeholder="My App"
+                :style="inputStyle"
+                @focus="focusInput"
+                @blur="blurInput"
               >
-                <path
-                  d="M6 1L1 10h10L6 1z"
-                  stroke="currentColor"
-                  stroke-width="1.2"
-                  stroke-linejoin="round"
-                />
-                <path
-                  d="M6 5v2.5"
-                  stroke="currentColor"
-                  stroke-width="1.2"
-                  stroke-linecap="round"
-                />
-                <circle
-                  cx="6"
-                  cy="9"
-                  r="0.5"
-                  fill="currentColor"
-                />
-              </svg>
-              Changing the slug breaks existing embeds. Contact support to rename.
-            </p>
+            </div>
+
+            <!-- Slug (read-only) -->
+            <div>
+              <label
+                style="
+                  display: block;
+                  font-size: 12px;
+                  font-weight: 500;
+                  color: var(--muted);
+                  margin-bottom: 5px;
+                "
+              >Slug</label>
+              <input
+                :value="form.slug"
+                disabled
+                :style="{
+                  ...inputStyle,
+                  opacity: '0.5',
+                  cursor: 'not-allowed',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '13px',
+                }"
+              >
+              <p
+                style="
+                  font-size: 12px;
+                  color: var(--amber);
+                  margin-top: 5px;
+                  display: flex;
+                  align-items: center;
+                  gap: 5px;
+                "
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                >
+                  <path
+                    d="M6 1L1 10h10L6 1z"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M6 5v2.5"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                    stroke-linecap="round"
+                  />
+                  <circle
+                    cx="6"
+                    cy="9"
+                    r="0.5"
+                    fill="currentColor"
+                  />
+                </svg>
+                Changing the slug breaks existing embeds.
+              </p>
+            </div>
+
+            <!-- Description -->
+            <div>
+              <label
+                style="
+                  display: block;
+                  font-size: 12px;
+                  font-weight: 500;
+                  color: var(--muted);
+                  margin-bottom: 5px;
+                "
+              >Description</label>
+              <textarea
+                v-model="form.description"
+                placeholder="What does this project track?"
+                rows="3"
+                :style="{ ...inputStyle, resize: 'vertical', fontFamily: 'var(--font-ui)' }"
+                @focus="focusInput"
+                @blur="blurInput"
+              />
+            </div>
           </div>
 
-          <!-- Description -->
-          <div>
+          <!-- Right: accent color card -->
+          <div
+            style="
+              background: var(--surface);
+              border-radius: var(--r-lg);
+              border: 1px solid var(--border);
+              padding: 20px;
+            "
+          >
             <label
               style="
                 display: block;
                 font-size: 12px;
                 font-weight: 500;
                 color: var(--muted);
-                margin-bottom: 5px;
-              "
-            >Description</label>
-            <textarea
-              v-model="form.description"
-              placeholder="What does this project track?"
-              rows="2"
-              :style="{ ...inputStyle, resize: 'vertical', fontFamily: 'var(--font-ui)' }"
-              @focus="focusInput"
-              @blur="blurInput"
-            />
-          </div>
-
-          <!-- Accent color -->
-          <div>
-            <label
-              style="
-                display: block;
-                font-size: 12px;
-                font-weight: 500;
-                color: var(--muted);
-                margin-bottom: 5px;
+                margin-bottom: 12px;
               "
             >Accent color</label>
-            <div style="display: flex; align-items: center; gap: 10px">
+
+            <!-- Swatch + hex -->
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px">
               <div
                 :style="{
-                  width: '32px',
-                  height: '32px',
+                  width: '40px',
+                  height: '40px',
                   borderRadius: 'var(--r-sm)',
                   background: form.accentColor,
                   border: '1px solid var(--border-md)',
                   cursor: 'pointer',
                   position: 'relative',
                   overflow: 'hidden',
+                  flex: 'none',
                 }"
               >
                 <input
@@ -352,28 +380,97 @@ function cancelDelete(): void {
                 placeholder="#0a6640"
                 :style="{
                   ...inputStyle,
-                  width: '120px',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '12px',
+                  fontSize: '13px',
                 }"
                 @focus="focusInput"
                 @blur="blurInput"
               >
-              <div style="display: flex; gap: 6px">
-                <button
-                  v-for="c in ['#0a6640', '#1d4ed8', '#6d28d9', '#92400e', '#be185d', '#111110']"
-                  :key="c"
-                  @click="form.accentColor = c"
+            </div>
+
+            <!-- Preset swatches -->
+            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+              <button
+                v-for="c in [
+                  '#0a6640',
+                  '#1d4ed8',
+                  '#6d28d9',
+                  '#92400e',
+                  '#be185d',
+                  '#0e7490',
+                  '#111110',
+                ]"
+                :key="c"
+                @click="form.accentColor = c"
+                :title="c"
+                :style="{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: c,
+                  border:
+                    form.accentColor === c ? '2.5px solid var(--text)' : '2.5px solid transparent',
+                  cursor: 'pointer',
+                  outline: form.accentColor === c ? '1px solid var(--border-md)' : 'none',
+                  outlineOffset: '2px',
+                }"
+              />
+            </div>
+
+            <!-- Preview chip -->
+            <div style="margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px">
+              <div
+                style="
+                  font-size: 11px;
+                  color: var(--dimmed);
+                  margin-bottom: 8px;
+                  font-family: var(--font-mono);
+                  text-transform: uppercase;
+                  letter-spacing: 0.06em;
+                "
+              >
+                Preview
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center">
+                <span
                   :style="{
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '50%',
-                    background: c,
-                    border:
-                      form.accentColor === c ? '2px solid var(--text)' : '2px solid transparent',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '3px 9px',
+                    borderRadius: '99px',
+                    background: form.accentColor + '22',
+                    color: form.accentColor,
+                    fontSize: '11px',
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: '500',
+                  }"
+                >
+                  <span
+                    :style="{
+                      width: '5px',
+                      height: '5px',
+                      borderRadius: '50%',
+                      background: form.accentColor,
+                      display: 'inline-block',
+                    }"
+                  />
+                  new
+                </span>
+                <button
+                  :style="{
+                    padding: '5px 12px',
+                    background: form.accentColor,
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 'var(--r-sm)',
+                    fontSize: '12px',
+                    fontFamily: 'var(--font-ui)',
                     cursor: 'pointer',
                   }"
-                />
+                >
+                  Publish
+                </button>
               </div>
             </div>
           </div>
@@ -382,62 +479,103 @@ function cancelDelete(): void {
 
       <hr style="border: none; border-top: 1px solid var(--border); margin-bottom: 36px">
 
-      <!-- ── Widget ── -->
+      <!-- ── Widget — side by side ── -->
       <section style="margin-bottom: 36px">
-        <h2 style="font-size: 15px; font-weight: 600; margin-bottom: 16px">
+        <h2 style="font-size: 15px; font-weight: 600; margin-bottom: 20px">
           Widget
         </h2>
 
-        <!-- Live preview -->
-        <div style="margin-bottom: 20px">
-          <WidgetPreview
-            :slug="current?.slug ?? ''"
-            :entries="previewEntries"
-            :project-name="current?.name"
-          />
-        </div>
-
-        <!-- Snippet -->
-        <div style="background: #1a1a1a; border-radius: var(--r-md); overflow: hidden">
-          <div
-            style="
-              padding: 9px 16px;
-              border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-            "
-          >
-            <span
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start">
+          <!-- Widget preview -->
+          <div>
+            <div
               style="
-                font-family: var(--font-mono);
-                font-size: 10px;
-                color: #6b6b78;
-                letter-spacing: 0.05em;
-                text-transform: uppercase;
-              "
-            >HTML</span>
-            <button
-              @click="copySnippet"
-              style="
-                background: none;
-                border: none;
-                cursor: pointer;
-                font-family: var(--font-mono);
                 font-size: 11px;
-                color: #6b6b78;
-                transition: color 150ms ease;
+                font-family: var(--font-mono);
+                color: var(--dimmed);
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                margin-bottom: 10px;
               "
-              :style="{ color: snippetCopied ? '#4ade80' : '#6b6b78' }"
             >
-              {{ snippetCopied ? '✓ Copied' : 'Copy snippet' }}
-            </button>
+              Preview
+            </div>
+            <WidgetPreview
+              :slug="current?.slug ?? ''"
+              :entries="previewEntries"
+              :project-name="current?.name"
+            />
           </div>
-          <div style="padding: 16px 20px; overflow-x: auto">
-            <pre
-              style="font-family: var(--font-mono); font-size: 13px; line-height: 1.8; margin: 0"
-            ><code><span style="color:#7dd3fc;">&lt;script</span> <span style="color:#86efac;">src</span><span style="color:#e2e2e0;">=</span><span style="color:#fca5a5;">"{{ origin }}/widget.js"</span><span style="color:#7dd3fc;">&gt;&lt;/script&gt;</span>
-<span style="color:#7dd3fc;">&lt;changelog-widget</span> <span style="color:#86efac;">project-id</span><span style="color:#e2e2e0;">=</span><span style="color:#fca5a5;">"{{ current?.slug ?? 'your-project' }}"</span><span style="color:#7dd3fc;">&gt;&lt;/changelog-widget&gt;</span></code></pre>
+
+          <!-- Embed snippet -->
+          <div>
+            <div
+              style="
+                font-size: 11px;
+                font-family: var(--font-mono);
+                color: var(--dimmed);
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                margin-bottom: 10px;
+              "
+            >
+              Embed snippet
+            </div>
+            <div
+              style="
+                background: #141413;
+                border-radius: var(--r-md);
+                overflow: hidden;
+                border: 1px solid rgba(255, 255, 255, 0.07);
+              "
+            >
+              <div
+                style="
+                  padding: 9px 16px;
+                  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                "
+              >
+                <span
+                  style="
+                    font-family: var(--font-mono);
+                    font-size: 10px;
+                    color: #555552;
+                    letter-spacing: 0.05em;
+                    text-transform: uppercase;
+                  "
+                >HTML</span>
+                <button
+                  @click="copySnippet"
+                  style="
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    font-family: var(--font-mono);
+                    font-size: 11px;
+                    transition: color 150ms ease;
+                  "
+                  :style="{ color: snippetCopied ? '#4ade80' : '#555552' }"
+                >
+                  {{ snippetCopied ? '✓ Copied' : 'Copy' }}
+                </button>
+              </div>
+              <div style="padding: 16px 20px; overflow-x: auto">
+                <pre
+                  style="
+                    font-family: var(--font-mono);
+                    font-size: 12px;
+                    line-height: 1.8;
+                    margin: 0;
+                  "
+                ><code><span style="color:#7dd3fc;">&lt;script</span> <span style="color:#86efac;">src</span><span style="color:#e2e2e0;">=</span><span style="color:#fca5a5;">"{{ origin }}/widget.js"</span><span style="color:#7dd3fc;">&gt;&lt;/script&gt;</span>
+<span style="color:#7dd3fc;">&lt;changelog-widget</span>
+  <span style="color:#86efac;">project-id</span><span style="color:#e2e2e0;">=</span><span style="color:#fca5a5;">"{{ current?.slug ?? 'your-project' }}"</span><span style="color:#7dd3fc;">&gt;
+&lt;/changelog-widget&gt;</span></code></pre>
+              </div>
+            </div>
           </div>
         </div>
       </section>

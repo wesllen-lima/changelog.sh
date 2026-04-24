@@ -152,7 +152,7 @@ function focusInput(e: Event) {
 
 function blurInput(e: Event): void {
   ;(e.target as HTMLElement).style.boxShadow = 'none'
-  ;(e.target as HTMLElement).style.borderColor = 'rgba(0,0,0,0.11)'
+  ;(e.target as HTMLElement).style.borderColor = 'var(--border-md)'
 }
 
 function cancelDelete(): void {

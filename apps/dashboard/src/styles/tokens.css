@@ -1,9 +1,12 @@
 :root {
+  color-scheme: light;
+
   /* ── Surfaces ── */
   --bg: #f9f8f6;
   --surface: #ffffff;
   --bg2: #f3f2f0;
   --bg3: #eceae6;
+  --sidebar-bg: #faf9f7;
 
   /* ── Borders ── */
   --border: rgba(0, 0, 0, 0.07);
@@ -68,10 +71,13 @@
 
 /* ── Dark mode ── */
 .dark {
+  color-scheme: dark;
+
   --bg: #111110;
   --surface: #1c1c1a;
   --bg2: #252523;
   --bg3: #2e2e2b;
+  --sidebar-bg: #161614;
 
   --border: rgba(255, 255, 255, 0.07);
   --border-md: rgba(255, 255, 255, 0.11);

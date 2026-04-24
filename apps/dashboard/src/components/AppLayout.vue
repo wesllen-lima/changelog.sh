@@ -73,7 +73,7 @@ function goToProjects(): void {
       style="
         width: 216px;
         flex-shrink: 0;
-        background: #faf9f7;
+        background: var(--sidebar-bg);
         border-right: 1px solid var(--border);
         display: flex;
         flex-direction: column;

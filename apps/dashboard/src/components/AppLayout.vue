@@ -44,8 +44,18 @@ function isActive(path: string) {
   return route.path.startsWith(path)
 }
 
-function projectColor(accentColor: string | null) {
+function projectColor(accentColor: string | null): string {
   return accentColor ?? '#0a6640'
+}
+
+function selectProject(p: (typeof projects.value)[0]): void {
+  setCurrentProject(p)
+  projectMenuOpen.value = false
+}
+
+function goToProjects(): void {
+  router.push('/projects')
+  projectMenuOpen.value = false
 }
 </script>
 
@@ -220,10 +230,7 @@ function projectColor(accentColor: string | null) {
             <button
               v-for="p in projects"
               :key="p.id"
-              @click="
-                setCurrentProject(p)
-                projectMenuOpen = false
-              "
+              @click="selectProject(p)"
               style="
                 width: 100%;
                 background: none;
@@ -279,10 +286,7 @@ function projectColor(accentColor: string | null) {
 
             <div style="border-top: 1px solid var(--border); padding: 4px 6px">
               <button
-                @click="
-                  router.push('/projects')
-                  projectMenuOpen = false
-                "
+                @click="goToProjects"
                 style="
                   width: 100%;
                   background: none;

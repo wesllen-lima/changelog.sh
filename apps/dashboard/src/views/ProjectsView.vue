@@ -85,7 +85,7 @@ onMounted(fetchProjects)
         @click="openNewForm"
         style="
           background: var(--text);
-          color: white;
+          color: var(--bg);
           border: none;
           border-radius: var(--r-sm);
           padding: 8px 14px;
@@ -173,7 +173,7 @@ onMounted(fetchProjects)
               style="
                 padding: 9px 18px;
                 background: var(--text);
-                color: white;
+                color: var(--bg);
                 border: none;
                 border-radius: var(--r-sm);
                 font-size: 13px;
@@ -552,7 +552,7 @@ onMounted(fetchProjects)
           @click="openNewForm"
           style="
             background: var(--text);
-            color: white;
+            color: var(--bg);
             border: none;
             border-radius: var(--r-sm);
             padding: 8px 16px;

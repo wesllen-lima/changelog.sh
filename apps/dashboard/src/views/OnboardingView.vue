@@ -135,7 +135,7 @@ async function handleCreate() {
               height: 24px;
               border-radius: 50%;
               background: var(--text);
-              color: white;
+              color: var(--bg);
               font-size: 11px;
               font-family: var(--font-mono);
               display: flex;
@@ -246,7 +246,7 @@ async function handleCreate() {
               width: 100%;
               padding: 11px;
               background: var(--text);
-              color: white;
+              color: var(--bg);
               border: none;
               border-radius: var(--r-sm);
               font-size: 14px;
@@ -370,7 +370,7 @@ async function handleCreate() {
               height: 24px;
               border-radius: 50%;
               background: var(--text);
-              color: white;
+              color: var(--bg);
               font-size: 11px;
               font-family: var(--font-mono);
               display: flex;
@@ -437,7 +437,7 @@ async function handleCreate() {
                 width: 100%;
                 padding: 11px;
                 background: var(--text);
-                color: white;
+                color: var(--bg);
                 border: none;
                 border-radius: var(--r-sm);
                 font-size: 14px;

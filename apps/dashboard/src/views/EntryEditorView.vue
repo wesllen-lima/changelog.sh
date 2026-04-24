@@ -283,7 +283,7 @@ function addTag(t: string): void {
             border-radius: var(--r-sm);
             border: none;
             background: var(--text);
-            color: white;
+            color: var(--bg);
             font-size: 13px;
             font-weight: 500;
             font-family: var(--font-ui);
@@ -556,7 +556,7 @@ function addTag(t: string): void {
             border-radius: var(--r-sm);
             border: none;
             background: var(--text);
-            color: white;
+            color: var(--bg);
             font-size: 13px;
             font-weight: 500;
             font-family: var(--font-ui);

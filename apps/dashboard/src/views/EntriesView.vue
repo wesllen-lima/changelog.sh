@@ -190,7 +190,7 @@ watch(current, (p) => {
           @click="router.push('/entries/new')"
           style="
             background: var(--text);
-            color: white;
+            color: var(--bg);
             border: none;
             border-radius: var(--r-sm);
             padding: 8px 14px;
@@ -344,7 +344,7 @@ watch(current, (p) => {
           @click="router.push('/entries/new')"
           style="
             background: var(--text);
-            color: white;
+            color: var(--bg);
             border: none;
             border-radius: var(--r-sm);
             padding: 8px 16px;

@@ -190,7 +190,7 @@ function cancelDelete(): void {
           style="
             padding: 7px 16px;
             background: var(--text);
-            color: white;
+            color: var(--bg);
             border: none;
             border-radius: var(--r-sm);
             font-size: 13px;
@@ -821,7 +821,7 @@ function cancelDelete(): void {
             style="
               padding: 9px 14px;
               background: var(--text);
-              color: white;
+              color: var(--bg);
               border: none;
               border-radius: var(--r-sm);
               font-size: 13px;

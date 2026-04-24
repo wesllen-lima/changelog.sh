@@ -9,7 +9,7 @@ import { useToast } from '../composables/useToast'
 
 const route = useRoute()
 const router = useRouter()
-const { entries, createEntry, updateEntry, publishEntry } = useEntries()
+const { entries, createEntry, updateEntry, publishEntry, duplicateEntry } = useEntries()
 const { current } = useProjects()
 const toast = useToast()
 
@@ -153,6 +153,24 @@ async function handlePublish() {
   }
 }
 
+const duplicating = ref(false)
+
+async function handleDuplicate(): Promise<void> {
+  const id = entryId.value ?? (isNew.value ? null : (route.params.id as string))
+  if (!id || duplicating.value) return
+  duplicating.value = true
+  try {
+    const result = await duplicateEntry(id)
+    if (result.ok) {
+      toast.success('Entry duplicated', {
+        action: { label: 'Open', fn: () => router.push(`/entries/${result.data.id}`) },
+      })
+    }
+  } finally {
+    duplicating.value = false
+  }
+}
+
 onMounted(() => {
   window.addEventListener('keydown', onKeyDown)
   if (!isNew.value) {
@@ -253,6 +271,58 @@ function addTag(t: string): void {
           v-if="isDirty && !saving"
           style="font-family: var(--font-mono); font-size: 11px; color: var(--dimmed)"
         >Unsaved</span>
+
+        <!-- Duplicate — only visible when editing an existing entry -->
+        <button
+          v-if="!isNew && entryId"
+          @click="handleDuplicate"
+          :disabled="duplicating"
+          :title="'Duplicate entry'"
+          style="
+            padding: 7px 10px;
+            border-radius: var(--r-sm);
+            border: 1px solid var(--border-md);
+            background: var(--surface);
+            font-size: 12px;
+            font-family: var(--font-ui);
+            cursor: pointer;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+          "
+          @mouseover="
+            (e) => ((e.currentTarget as HTMLElement).style.borderColor = 'var(--border-dk)')
+          "
+          @mouseleave="
+            (e) => ((e.currentTarget as HTMLElement).style.borderColor = 'var(--border-md)')
+          "
+        >
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 14 14"
+            fill="none"
+          >
+            <rect
+              x="4"
+              y="4"
+              width="8"
+              height="8"
+              rx="1.5"
+              stroke="currentColor"
+              stroke-width="1.2"
+            />
+            <path
+              d="M2 10V3a1 1 0 011-1h7"
+              stroke="currentColor"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            />
+          </svg>
+          {{ duplicating ? '…' : 'Duplicate' }}
+        </button>
 
         <button
           @click="handleSaveDraft"

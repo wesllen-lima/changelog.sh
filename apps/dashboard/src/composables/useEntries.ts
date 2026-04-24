@@ -22,6 +22,7 @@ export function useEntries(): {
   publishEntry: (id: string) => Promise<Result<Entry>>
   unpublishEntry: (id: string) => Promise<Result<Entry>>
   deleteEntry: (id: string) => Promise<Result<undefined>>
+  duplicateEntry: (id: string) => Promise<Result<Entry>>
 } {
   async function fetchEntries(slug: string, publishedOnly = false): Promise<void> {
     loading.value = true
@@ -84,6 +85,12 @@ export function useEntries(): {
     return result
   }
 
+  async function duplicateEntry(id: string): Promise<Result<Entry>> {
+    const result = await api.post<Entry>(`/api/entries/${id}/duplicate`)
+    if (result.ok) entries.value.unshift(result.data)
+    return result
+  }
+
   return {
     entries: readonly(entries),
     loading: readonly(loading),
@@ -94,5 +101,6 @@ export function useEntries(): {
     publishEntry,
     unpublishEntry,
     deleteEntry,
+    duplicateEntry,
   }
 }

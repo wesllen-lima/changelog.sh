@@ -6,6 +6,7 @@ import { users } from './db/schema'
 import { auth, magicLinkEnabled } from './auth'
 import { errorHandler } from './middleware/error'
 import { corsMiddleware } from './middleware/cors'
+import { rateLimit } from './middleware/rate-limit'
 import projectRoutes from './routes/projects'
 import entryRoutes from './routes/entries'
 import apiKeyRoutes from './routes/api-keys'
@@ -32,11 +33,17 @@ const app = new Hono()
 app.use('/*', corsMiddleware)
 app.onError(errorHandler)
 
+// Healthcheck
+app.get('/health', (c) =>
+  c.json({ status: 'ok', uptime: Math.floor(process.uptime()), ts: Date.now() }),
+)
+
 // Public config — lets the dashboard know which features are available
 app.get('/api/config', (c) => c.json({ magicLinkEnabled }))
 
 // Auth routes — bypass Better Auth CSRF by calling internal API directly
-app.post('/api/auth/sign-in/email', async (c) => {
+// Rate-limited: 10 attempts per minute per IP
+app.post('/api/auth/sign-in/email', rateLimit(10, 60_000), async (c) => {
   const body = await c.req.json<{ email: string; password: string }>()
   return auth.api.signInEmail({ body, asResponse: true })
 })
@@ -45,7 +52,7 @@ app.post('/api/auth/sign-out', async (c) => {
   return auth.api.signOut({ headers: c.req.raw.headers, asResponse: true })
 })
 
-app.post('/api/auth/magic-link/send', async (c) => {
+app.post('/api/auth/magic-link/send', rateLimit(5, 60_000), async (c) => {
   if (!magicLinkEnabled) return c.json({ error: 'Magic link not configured' }, 501)
   const body = await c.req.json<{ email: string; callbackURL: string }>()
   // signInMagicLink is only present when the plugin is loaded; cast is safe here

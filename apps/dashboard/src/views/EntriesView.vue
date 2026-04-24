@@ -10,7 +10,15 @@ import { useToast } from '../composables/useToast'
 import type { Entry } from '@changelog/types'
 
 const router = useRouter()
-const { entries, loading, fetchEntries, deleteEntry, publishEntry, unpublishEntry } = useEntries()
+const {
+  entries,
+  loading,
+  fetchEntries,
+  deleteEntry,
+  publishEntry,
+  unpublishEntry,
+  duplicateEntry,
+} = useEntries()
 const { current } = useProjects()
 const toast = useToast()
 
@@ -565,6 +573,52 @@ watch(current, (p) => {
                         :fill="entry.publishedAt ? 'var(--accent)' : 'none'"
                         :stroke="entry.publishedAt ? 'none' : 'currentColor'"
                         stroke-width="1.2"
+                      />
+                    </svg>
+                  </button>
+                  <!-- Duplicate -->
+                  <button
+                    @click.stop="duplicateEntry(entry.id)"
+                    title="Duplicate"
+                    style="
+                      width: 28px;
+                      height: 28px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      border: none;
+                      background: none;
+                      cursor: pointer;
+                      border-radius: var(--r-sm);
+                      color: var(--muted);
+                    "
+                    @mouseover="
+                      (e) => ((e.currentTarget as HTMLElement).style.background = 'var(--bg2)')
+                    "
+                    @mouseleave="
+                      (e) => ((e.currentTarget as HTMLElement).style.background = 'none')
+                    "
+                  >
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 14 14"
+                      fill="none"
+                    >
+                      <rect
+                        x="4"
+                        y="4"
+                        width="8"
+                        height="8"
+                        rx="1.5"
+                        stroke="currentColor"
+                        stroke-width="1.2"
+                      />
+                      <path
+                        d="M2 10V3a1 1 0 011-1h7"
+                        stroke="currentColor"
+                        stroke-width="1.2"
+                        stroke-linecap="round"
                       />
                     </svg>
                   </button>

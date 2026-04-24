@@ -7,6 +7,7 @@ import {
   deleteEntry,
   publishEntry,
   unpublishEntry,
+  duplicateEntry,
   type Entry,
   type NewEntry,
   type EntryUpdate,
@@ -117,6 +118,22 @@ export async function unpublishEntryForCaller(
   const updated = await getEntry(db, id)
   if (!updated) return err('Entry not found', 404)
   return ok(updated)
+}
+
+export async function duplicateEntryForCaller(
+  id: string,
+  callerId: string | null,
+  callerProjectId: string | null,
+): Promise<Result<Entry>> {
+  const entry = await getEntry(db, id)
+  if (!entry) return err('Entry not found', 404)
+
+  if (!(await canWriteProject(entry.projectId, callerId, callerProjectId))) {
+    return err('Forbidden', 403)
+  }
+
+  const copy = duplicateEntry(db, entry)
+  return ok(copy)
 }
 
 async function canWriteProject(

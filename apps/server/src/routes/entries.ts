@@ -8,6 +8,7 @@ import {
   deleteEntryForCaller,
   publishEntryForCaller,
   unpublishEntryForCaller,
+  duplicateEntryForCaller,
 } from '../services/entries'
 
 const createSchema = z.object({
@@ -89,6 +90,16 @@ entryRoutes.post('/entries/:id/unpublish', requireAuth, async (c) => {
   )
   if (!result.ok) return c.json({ error: result.error }, result.status as 404 | 403)
   return c.json(result.data)
+})
+
+entryRoutes.post('/entries/:id/duplicate', requireAuth, async (c) => {
+  const result = await duplicateEntryForCaller(
+    c.req.param('id'),
+    c.get('userId') ?? null,
+    c.get('apiKeyProjectId') ?? null,
+  )
+  if (!result.ok) return c.json({ error: result.error }, result.status as 404 | 403)
+  return c.json(result.data, 201)
 })
 
 export default entryRoutes

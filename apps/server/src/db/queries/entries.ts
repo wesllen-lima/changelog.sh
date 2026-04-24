@@ -95,3 +95,19 @@ export function unpublishEntry(db: DrizzleDb, id: string): void {
     .where(eq(entries.id, id))
     .run()
 }
+
+export function duplicateEntry(db: DrizzleDb, source: Entry): Entry {
+  const now = new Date().toISOString()
+  const row: EntryRow = {
+    id: newId(),
+    projectId: source.projectId,
+    title: `${source.title} (copy)`,
+    body: source.body,
+    tags: JSON.stringify(source.tags),
+    publishedAt: null,
+    createdAt: now,
+    updatedAt: now,
+  }
+  db.insert(entries).values(row).run()
+  return toEntry(row)
+}

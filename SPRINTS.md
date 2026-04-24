@@ -118,6 +118,55 @@ Criar entry, publicar, verificar em `GET /:slug`. Despublicar, verificar que som
 
 ---
 
+## Backlog — Widget (prioridade alta)
+
+O widget (`packages/widget/src/index.ts`) está funcional mas básico. Lacunas identificadas no código:
+
+- [ ] **Dark mode no widget** — STYLES hardcoded com `#fff`, `#111`, `#f0f0f0`; sem respeito a `prefers-color-scheme` nem variável CSS `--cl-theme`
+- [ ] **Theming via atributos** — hoje só `data-project` e `data-api` são lidos; adicionar `data-theme="dark|light|auto"`, `data-position="bottom-left|bottom-right|top-right"`, `data-locale`
+- [ ] **Markdown no widget** — `entry.body` é truncado como texto puro (`truncate(e.body, 80)`); renderizar pelo menos negrito, inline-code e listas no painel
+- [ ] **Posição configurável** — botão fixo em `bottom: 24px; right: 24px`; expor via atributo ou CSS custom properties
+- [ ] **Fechar com Escape** — sem listener de teclado; adicionar `keydown` para acessibilidade
+- [ ] **`observedAttributes`** — sem `attributeChangedCallback`; mudanças em `data-project` após mount não re-carregam entradas
+- [ ] **Loading e erro no painel** — sem estado de carregamento nem mensagem de erro quando fetch falha; painel abre vazio silenciosamente
+
+---
+
+## Backlog — Servidor / API (prioridade média)
+
+Lacunas identificadas em `apps/server/src/`:
+
+- [ ] **Paginação** — `listEntries` retorna tudo sem limit/offset; projetos com muitas entries vão degradar performance e o widget já limita a 5 no cliente
+- [ ] **Rate limiting** — nenhum middleware de rate limit em nenhuma rota; `/api/auth/sign-in` e `/api/auth/magic-link/send` estão abertos a brute-force
+- [ ] **Duplicar entry** — sem rota `POST /api/entries/:id/duplicate`; funcionalidade útil que exige só uma query
+- [ ] **Reordenar entries** — publishedAt é imutável após publish; sem forma de ajustar a ordem de exibição
+- [ ] **Publicação agendada** — schema não tem campo `scheduledAt`; adicionar coluna + job de publicação via `setInterval` no boot
+- [ ] **Webhook on publish** — sem tabela `webhooks` nem dispatch; útil para integrar com Slack, CI, etc.
+- [ ] **Busca server-side** — `GET /api/projects/:slug/entries?q=` não existe; hoje o filtro é só no cliente
+- [ ] **Slug editável** — `PATCH /api/projects/:id` não aceita `slug`; não há como renomear um projeto sem afetar URLs
+
+---
+
+## Backlog — Auth / Segurança (prioridade média)
+
+- [ ] **Password reset** — Better Auth suporta, mas não está configurado nem exposto no dashboard
+- [ ] **Email verification** — campo `emailVerified` existe no schema mas nunca é checado; qualquer email pode logar sem verificar
+- [ ] **Rotação de API keys** — só há `DELETE`; adicionar `POST /api/keys/:id/rotate` que revoga e cria em uma operação atômica
+- [ ] **Audit log** — sem registro de ações (quem publicou, quem deletou); relevante para multi-usuário futuro
+- [ ] **CORS restritivo em produção** — `ALLOWED_ORIGIN` já existe mas não há validação que impeça `*` em `NODE_ENV=production`
+
+---
+
+## Backlog — DX / Qualidade (prioridade baixa)
+
+- [ ] **Cobertura de testes do dashboard** — zero testes em `apps/dashboard`; adicionar testes de composables com Vitest + `@vue/test-utils`
+- [ ] **Testes E2E** — sem Playwright ou similar; fluxo crítico (login → criar entry → publicar → verificar página pública) sem cobertura automatizada
+- [ ] **Storybook ou catálogo de componentes** — `TagPill`, `StatusBadge`, `WidgetPreview`, `Toast`, `CommandPalette` sem documentação visual isolada
+- [ ] **Healthcheck endpoint** — sem `GET /health`; Docker e load balancers precisam de um endpoint de liveness/readiness
+- [ ] **Métricas de uso** — sem logging estruturado de eventos (entry publicada, widget carregado, etc.); dificulta entender adoção
+
+---
+
 ## Backlog (pós-v1, avaliar com tração)
 
 - **CI/CD publish via `curl`** — exemplo documentado de publicar uma entry via API key num pipeline de deploy (GitHub Actions, Bitbucket, etc.)

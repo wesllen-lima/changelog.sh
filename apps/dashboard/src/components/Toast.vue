@@ -79,7 +79,7 @@ const colors = {
           <button
             v-if="toast.action"
             @click="
-              toast.action!.fn()
+              toast.action?.fn()
               remove(toast.id)
             "
             style="

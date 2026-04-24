@@ -60,13 +60,23 @@ app.get('/:slug', async (c) => {
   const entries = entriesResult.ok ? entriesResult.data : []
 
   const project = projectResult.data
+  const origin = new URL(c.req.url).origin
 
   return c.html(
     <ChangelogPage
       projectName={project.name}
       slug={slug}
-      accentColor={project.accentColor ?? '#6366f1'}
-      entries={entries.filter((e) => e.publishedAt !== null) as { id: string; title: string; body: string; tags: string[]; publishedAt: string }[]}
+      accentColor={project.accentColor ?? '#0a6640'}
+      origin={origin}
+      entries={
+        entries.filter((e) => e.publishedAt !== null) as {
+          id: string
+          title: string
+          body: string
+          tags: string[]
+          publishedAt: string
+        }[]
+      }
     />,
   )
 })

@@ -43,9 +43,21 @@ async function handleDelete(id: string) {
   toast.success('Project deleted')
 }
 
-function openNewForm() {
+function openNewForm(): void {
   showNewForm.value = true
   setTimeout(() => newInputRef.value?.focus(), 50)
+}
+
+type Project = (typeof projects.value)[0]
+
+function openProject(project: Project): void {
+  setCurrentProject(project)
+  router.push('/entries')
+}
+
+function openProjectSettings(project: Project): void {
+  setCurrentProject(project)
+  router.push('/settings')
 }
 
 onMounted(fetchProjects)
@@ -235,10 +247,7 @@ onMounted(fetchProjects)
               transform 200ms var(--ease-smooth);
             cursor: pointer;
           "
-          @click="
-            setCurrentProject(project)
-            router.push('/entries')
-          "
+          @click="openProject(project)"
           @mouseover="
             (e) => {
               const el = e.currentTarget as HTMLElement
@@ -395,10 +404,7 @@ onMounted(fetchProjects)
               style="display: flex; gap: 4px"
             >
               <button
-                @click="
-                  setCurrentProject(project)
-                  router.push('/settings')
-                "
+                @click="openProjectSettings(project)"
                 title="Settings"
                 style="
                   width: 28px;

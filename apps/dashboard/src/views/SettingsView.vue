@@ -150,9 +150,14 @@ function focusInput(e: Event) {
   ;(e.target as HTMLElement).style.borderColor = 'transparent'
 }
 
-function blurInput(e: Event) {
+function blurInput(e: Event): void {
   ;(e.target as HTMLElement).style.boxShadow = 'none'
   ;(e.target as HTMLElement).style.borderColor = 'rgba(0,0,0,0.11)'
+}
+
+function cancelDelete(): void {
+  deleteModalOpen.value = false
+  deleteConfirmSlug.value = ''
 }
 </script>
 
@@ -783,10 +788,7 @@ function blurInput(e: Event) {
           >
           <div style="display: flex; gap: 8px; justify-content: flex-end">
             <button
-              @click="
-                deleteModalOpen = false
-                deleteConfirmSlug = ''
-              "
+              @click="cancelDelete"
               style="
                 padding: 8px 16px;
                 background: none;

@@ -169,6 +169,11 @@ onMounted(() => {
 })
 
 onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
+
+function addTag(t: string): void {
+  tags.value.push(t)
+  tagMenuOpen.value = false
+}
 </script>
 
 <template>
@@ -384,10 +389,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
               <button
                 v-for="t in unusedTags"
                 :key="t"
-                @click="
-                  tags.push(t)
-                  tagMenuOpen = false
-                "
+                @click="addTag(t)"
                 style="
                   width: 100%;
                   background: none;

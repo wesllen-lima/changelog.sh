@@ -109,6 +109,15 @@ Criar entry, publicar, verificar em `GET /:slug`. Despublicar, verificar que som
 
 ---
 
+## Backlog — UI/UX (prioridade alta)
+
+- [ ] **Cadastro de tags customizadas** — hoje as tags são hardcoded (`new`, `fix`, `improvement`, `performance`); permitir que o usuário crie, edite e remova suas próprias tags por projeto, com cor personalizada
+- [ ] **Settings funcional** — a maioria das seções da tela de configurações não persiste nem chama a API corretamente: salvar nome/descrição/accentColor, revogar API keys, deletar projeto e copiar snippet precisam ser validados end-to-end
+- [ ] **Dark mode na página pública** — `changelog-page.tsx` (SSR) não tem suporte a dark mode; implementar via `prefers-color-scheme` no CSS e opcionalmente um toggle persistido em cookie para respeitar a preferência do usuário
+- [ ] **Área do usuário no sidebar** — o bloco com avatar + nome + email + botões de tema e logout está apertado e pouco legível; redesenhar com melhor hierarquia visual e mais espaço
+
+---
+
 ## Backlog (pós-v1, avaliar com tração)
 
 - **CI/CD publish via `curl`** — exemplo documentado de publicar uma entry via API key num pipeline de deploy (GitHub Actions, Bitbucket, etc.)

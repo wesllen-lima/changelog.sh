@@ -51,7 +51,12 @@ export async function updateProjectForUser(
   const project = rows.find((p) => p.id === id)
   if (!project) return err('Project not found', 404)
   updateProject(db, id, data)
-  return ok({ ...project, ...data })
+  const merged = { ...project }
+  if (data.name !== undefined) merged.name = data.name
+  if (data.description !== undefined) merged.description = data.description
+  if (data.accentColor !== undefined) merged.accentColor = data.accentColor
+  if (data.customTags !== undefined) merged.customTags = data.customTags
+  return ok(merged)
 }
 
 export async function deleteProjectForUser(userId: string, id: string): Promise<Result<void>> {

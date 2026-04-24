@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Velka — Test Page</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        font-family: system-ui, sans-serif;
+        background: #f5f5f5;
+        min-height: 100vh;
+      }
+
+      nav {
+        background: #fff;
+        border-bottom: 1px solid #e5e5e5;
+        padding: 0 32px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .logo {
+        font-weight: 600;
+        font-size: 16px;
+        letter-spacing: -0.3px;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        list-style: none;
+      }
+
+      .nav-links a {
+        font-size: 14px;
+        color: #555;
+        text-decoration: none;
+      }
+
+      main {
+        max-width: 760px;
+        margin: 80px auto;
+        padding: 0 24px;
+      }
+
+      h1 {
+        font-size: 36px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        margin-bottom: 16px;
+      }
+
+      p {
+        font-size: 16px;
+        color: #555;
+        line-height: 1.7;
+        margin-bottom: 12px;
+      }
+
+      .cta {
+        display: inline-block;
+        margin-top: 24px;
+        background: #111;
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <span class="logo">velka</span>
+      <ul class="nav-links">
+        <li><a href="#">Product</a></li>
+        <li><a href="#">Pricing</a></li>
+        <li><a href="#">Docs</a></li>
+        <li><a href="#">Login</a></li>
+      </ul>
+    </nav>
+
+    <main>
+      <h1>Ship faster,<br>together.</h1>
+      <p>
+        Velka is a fictional product page used to test the changelog.sh widget.
+        Click "What's new" in the nav to see the embedded changelog popover.
+      </p>
+      <p>
+        The widget fetches entries from your local server, tracks unread items
+        via localStorage, and renders inside a Shadow DOM — zero style conflicts.
+      </p>
+      <a href="#" class="cta">Get started →</a>
+    </main>
+
+    <script src="http://localhost:3456/widget.js"></script>
+    <changelog-widget
+      data-project="velka"
+      data-api="http://localhost:3456"
+    ></changelog-widget>
+  </body>
+</html>

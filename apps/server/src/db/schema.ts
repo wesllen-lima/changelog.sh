@@ -6,6 +6,7 @@ export const projects = sqliteTable('projects', {
   slug: text('slug').notNull().unique(),
   description: text('description'),
   accentColor: text('accent_color').notNull().default('#6366f1'),
+  customTags: text('custom_tags').notNull().default('[]'),
   ownerId: text('owner_id').notNull(),
   createdAt: text('created_at').notNull(),
 })

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-withDefaults(
+const props = withDefaults(
   defineProps<{
     tag: string
     removable?: boolean
+    color?: string
   }>(),
   { removable: false },
 )
@@ -29,6 +30,14 @@ const TAG_MAP: Record<string, { bg: string; color: string; dot: string; label: s
 }
 
 function meta(tag: string) {
+  if (props.color) {
+    return {
+      bg: props.color + '22',
+      color: props.color,
+      dot: props.color,
+      label: tag,
+    }
+  }
   return (
     TAG_MAP[tag.toLowerCase()] ?? {
       bg: 'var(--bg2)',

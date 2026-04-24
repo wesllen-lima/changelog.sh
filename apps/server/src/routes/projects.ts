@@ -8,6 +8,11 @@ import {
   deleteProjectForUser,
 } from '../services/projects'
 
+const customTagSchema = z.object({
+  name: z.string().min(1).max(50),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+})
+
 const createSchema = z.object({
   name: z.string().min(1).max(100),
   slug: z.string().min(1).max(60).optional(),
@@ -16,6 +21,7 @@ const createSchema = z.object({
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
     .optional(),
+  customTags: z.array(customTagSchema).optional(),
 })
 
 const updateSchema = z.object({
@@ -25,6 +31,7 @@ const updateSchema = z.object({
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
     .optional(),
+  customTags: z.array(customTagSchema).optional(),
 })
 
 const projectRoutes = new Hono<{ Variables: SessionVariables }>()

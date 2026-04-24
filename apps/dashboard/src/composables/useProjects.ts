@@ -1,6 +1,6 @@
 import { ref, readonly } from 'vue'
 import { api } from './useApi'
-import type { Project, Result } from '@changelog/types'
+import type { Project, CustomTag, Result } from '@changelog/types'
 
 const projects = ref<Project[]>([])
 const current = ref<Project | null>(null)
@@ -20,7 +20,9 @@ export function useProjects(): {
   }) => Promise<Result<Project>>
   updateProject: (
     id: string,
-    payload: Partial<Pick<Project, 'name' | 'description' | 'accentColor'>>,
+    payload: Partial<Pick<Project, 'name' | 'description' | 'accentColor'>> & {
+      customTags?: CustomTag[]
+    },
   ) => Promise<Result<Project>>
   deleteProject: (id: string) => Promise<Result<undefined>>
   setCurrentProject: (project: Project) => void
@@ -58,7 +60,9 @@ export function useProjects(): {
 
   async function updateProject(
     id: string,
-    payload: Partial<Pick<Project, 'name' | 'description' | 'accentColor'>>,
+    payload: Partial<Pick<Project, 'name' | 'description' | 'accentColor'>> & {
+      customTags?: CustomTag[]
+    },
   ): Promise<Result<Project>> {
     const result = await api.patch<Project>(`/api/projects/${id}`, payload)
     if (result.ok) {

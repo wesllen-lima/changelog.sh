@@ -1,3 +1,8 @@
+export interface CustomTag {
+  name: string
+  color: string
+}
+
 export interface User {
   id: string
   name: string
@@ -11,6 +16,7 @@ export interface Project {
   slug: string
   description: string | null
   accentColor: string | null
+  customTags: CustomTag[]
   ownerId: string
   createdAt: string
 }

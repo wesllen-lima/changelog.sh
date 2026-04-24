@@ -26,14 +26,14 @@ describe('createEntry', () => {
     expect(entry.title).toBe('Hello')
     expect(entry.projectId).toBe(PROJECT_ID)
     expect(entry.body).toBe('')
-    expect(entry.tags).toBe('[]')
+    expect(entry.tags).toEqual([])
     expect(entry.publishedAt).toBeNull()
     expect(entry.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
   })
 
   test('serializes tags to JSON', () => {
     const entry = createEntry(db, { projectId: PROJECT_ID, title: 'T', tags: ['a', 'b'] })
-    expect(entry.tags).toBe('["a","b"]')
+    expect(entry.tags).toEqual(['a', 'b'])
   })
 })
 
@@ -100,7 +100,7 @@ describe('updateEntry', () => {
     const found = await getEntry(db, entry.id)
     expect(found?.title).toBe('New')
     expect(found?.body).toBe('Content')
-    expect(found?.tags).toBe('["feat"]')
+    expect(found?.tags).toEqual(['feat'])
   })
 
   test('updates updatedAt', async () => {

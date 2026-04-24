@@ -39,8 +39,17 @@ const isDirty = computed(() => {
   )
 })
 
-const AVAILABLE_TAGS = ['new', 'fix', 'improvement', 'performance']
-const unusedTags = computed(() => AVAILABLE_TAGS.filter((t) => !tags.value.includes(t)))
+const DEFAULT_TAGS = [
+  { name: 'new', color: '' },
+  { name: 'fix', color: '' },
+  { name: 'improvement', color: '' },
+  { name: 'performance', color: '' },
+]
+const availableTags = computed(() => {
+  const ct = current.value?.customTags
+  return ct && ct.length > 0 ? ct : DEFAULT_TAGS
+})
+const unusedTags = computed(() => availableTags.value.filter((t) => !tags.value.includes(t.name)))
 
 const wordCount = computed(() => body.value.split(/\s+/).filter(Boolean).length)
 
@@ -188,8 +197,8 @@ onMounted(() => {
 
 onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 
-function addTag(t: string): void {
-  tags.value.push(t)
+function addTag(t: { name: string; color: string }): void {
+  tags.value.push(t.name)
   tagMenuOpen.value = false
 }
 </script>
@@ -458,7 +467,7 @@ function addTag(t: string): void {
             >
               <button
                 v-for="t in unusedTags"
-                :key="t"
+                :key="t.name"
                 @click="addTag(t)"
                 style="
                   width: 100%;
@@ -478,7 +487,10 @@ function addTag(t: string): void {
                 "
                 @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.background = 'none')"
               >
-                <TagPill :tag="t" />
+                <TagPill
+                  :tag="t.name"
+                  :color="t.color || undefined"
+                />
               </button>
             </div>
           </Transition>

@@ -9,6 +9,7 @@ const CREATE_TABLES = `
     slug TEXT NOT NULL UNIQUE,
     description TEXT,
     accent_color TEXT NOT NULL DEFAULT '#6366f1',
+    custom_tags TEXT NOT NULL DEFAULT '[]',
     owner_id TEXT NOT NULL,
     created_at TEXT NOT NULL
   );

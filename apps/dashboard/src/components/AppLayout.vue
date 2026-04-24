@@ -545,140 +545,138 @@ function goToProjects(): void {
       </Transition>
 
       <!-- User -->
-      <div
-        style="
-          padding: 12px 14px;
-          border-top: 1px solid var(--border);
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        "
-      >
-        <div
-          style="
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: var(--accent);
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          "
-        >
-          <span style="color: white; font-size: 11px; font-weight: 600">
-            {{ user?.name?.[0]?.toUpperCase() ?? 'U' }}
-          </span>
-        </div>
-        <div style="overflow: hidden; flex: 1">
+      <div style="padding: 10px 12px 12px; border-top: 1px solid var(--border)">
+        <!-- Row 1: avatar + name + actions -->
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px">
           <div
             style="
+              width: 26px;
+              height: 26px;
+              border-radius: 50%;
+              background: var(--accent);
+              flex-shrink: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span style="color: white; font-size: 10px; font-weight: 600; line-height: 1">
+              {{ user?.name?.[0]?.toUpperCase() ?? 'U' }}
+            </span>
+          </div>
+          <span
+            style="
+              flex: 1;
               font-size: 13px;
               font-weight: 500;
+              color: var(--text);
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
             "
-          >
-            {{ user?.name ?? 'User' }}
-          </div>
-          <div
-            style="
-              font-family: var(--font-mono);
-              font-size: 10px;
-              color: var(--dimmed);
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-            "
-          >
-            {{ user?.email ?? '' }}
-          </div>
-        </div>
-        <!-- Theme toggle -->
-        <button
-          @click="toggleTheme"
-          :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-          style="
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--dimmed);
-            padding: 4px;
-            border-radius: 4px;
-          "
-          @mouseover="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--muted)')"
-          @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--dimmed)')"
-        >
-          <!-- Sun (light mode icon) -->
-          <svg
-            v-if="isDark"
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-          >
-            <circle
-              cx="7"
-              cy="7"
-              r="2.5"
-              stroke="currentColor"
-              stroke-width="1.3"
-            />
-            <path
-              d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.9 2.9l1.1 1.1M10 10l1.1 1.1M2.9 11.1L4 10M10 4l1.1-1.1"
-              stroke="currentColor"
-              stroke-width="1.3"
-              stroke-linecap="round"
-            />
-          </svg>
-          <!-- Moon (dark mode icon) -->
-          <svg
-            v-else
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-          >
-            <path
-              d="M11.5 8A5 5 0 016 2.5a5 5 0 100 9 5 5 0 005.5-3.5z"
-              stroke="currentColor"
-              stroke-width="1.3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </button>
+          >{{ user?.name ?? 'User' }}</span>
 
-        <button
-          @click="signOut"
-          title="Sign out"
-          style="
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--dimmed);
-            padding: 4px;
-            border-radius: 4px;
-          "
-          @mouseover="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--muted)')"
-          @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--dimmed)')"
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
+          <!-- Theme toggle -->
+          <button
+            @click="toggleTheme"
+            :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+            style="
+              background: none;
+              border: none;
+              cursor: pointer;
+              color: var(--dimmed);
+              padding: 4px;
+              border-radius: 4px;
+              flex-shrink: 0;
+            "
+            @mouseover="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--muted)')"
+            @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--dimmed)')"
           >
-            <path
-              d="M5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2M9.5 9.5L12 7l-2.5-2.5M12 7H5"
-              stroke="currentColor"
-              stroke-width="1.3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </button>
+            <svg
+              v-if="isDark"
+              width="13"
+              height="13"
+              viewBox="0 0 14 14"
+              fill="none"
+            >
+              <circle
+                cx="7"
+                cy="7"
+                r="2.5"
+                stroke="currentColor"
+                stroke-width="1.3"
+              />
+              <path
+                d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.9 2.9l1.1 1.1M10 10l1.1 1.1M2.9 11.1L4 10M10 4l1.1-1.1"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+              />
+            </svg>
+            <svg
+              v-else
+              width="13"
+              height="13"
+              viewBox="0 0 14 14"
+              fill="none"
+            >
+              <path
+                d="M11.5 8A5 5 0 016 2.5a5 5 0 100 9 5 5 0 005.5-3.5z"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+
+          <!-- Sign out -->
+          <button
+            @click="signOut"
+            title="Sign out"
+            style="
+              background: none;
+              border: none;
+              cursor: pointer;
+              color: var(--dimmed);
+              padding: 4px;
+              border-radius: 4px;
+              flex-shrink: 0;
+            "
+            @mouseover="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--muted)')"
+            @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--dimmed)')"
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 14 14"
+              fill="none"
+            >
+              <path
+                d="M5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2M9.5 9.5L12 7l-2.5-2.5M12 7H5"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Row 2: email -->
+        <div
+          style="
+            padding-left: 34px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--dimmed);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          "
+        >
+          {{ user?.email ?? '' }}
+        </div>
       </div>
     </aside>
 

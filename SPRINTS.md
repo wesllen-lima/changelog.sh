@@ -111,10 +111,10 @@ Criar entry, publicar, verificar em `GET /:slug`. Despublicar, verificar que som
 
 ## Backlog — UI/UX (prioridade alta)
 
-- [ ] **Cadastro de tags customizadas** — hoje as tags são hardcoded (`new`, `fix`, `improvement`, `performance`); permitir que o usuário crie, edite e remova suas próprias tags por projeto, com cor personalizada
-- [ ] **Settings funcional** — a maioria das seções da tela de configurações não persiste nem chama a API corretamente: salvar nome/descrição/accentColor, revogar API keys, deletar projeto e copiar snippet precisam ser validados end-to-end
-- [ ] **Dark mode na página pública** — `changelog-page.tsx` (SSR) não tem suporte a dark mode; implementar via `prefers-color-scheme` no CSS e opcionalmente um toggle persistido em cookie para respeitar a preferência do usuário
-- [ ] **Área do usuário no sidebar** — o bloco com avatar + nome + email + botões de tema e logout está apertado e pouco legível; redesenhar com melhor hierarquia visual e mais espaço
+- [x] **Cadastro de tags customizadas** — `customTags` por projeto (DB + API + Settings UI + editor); tags com cor personalizada; fallback para as 4 padrão quando não configuradas
+- [x] **Settings funcional** — salvar nome/descrição/accentColor (PATCH /api/projects/:id), gerar/revogar API keys, deletar projeto com confirmação por slug — todos validados e funcionais
+- [x] **Dark mode na página pública** — `changelog-page.tsx` (SSR) implementado via `@media (prefers-color-scheme: dark)` com token overrides completos
+- [x] **Área do usuário no sidebar** — redesenhado em 2 linhas: avatar+nome+ações na primeira, email indentado na segunda; melhor hierarquia visual
 
 ---
 
@@ -122,13 +122,13 @@ Criar entry, publicar, verificar em `GET /:slug`. Despublicar, verificar que som
 
 O widget (`packages/widget/src/index.ts`) está funcional mas básico. Lacunas identificadas no código:
 
-- [ ] **Dark mode no widget** — STYLES hardcoded com `#fff`, `#111`, `#f0f0f0`; sem respeito a `prefers-color-scheme` nem variável CSS `--cl-theme`
-- [ ] **Theming via atributos** — hoje só `data-project` e `data-api` são lidos; adicionar `data-theme="dark|light|auto"`, `data-position="bottom-left|bottom-right|top-right"`, `data-locale`
-- [ ] **Markdown no widget** — `entry.body` é truncado como texto puro (`truncate(e.body, 80)`); renderizar pelo menos negrito, inline-code e listas no painel
-- [ ] **Posição configurável** — botão fixo em `bottom: 24px; right: 24px`; expor via atributo ou CSS custom properties
-- [ ] **Fechar com Escape** — sem listener de teclado; adicionar `keydown` para acessibilidade
-- [ ] **`observedAttributes`** — sem `attributeChangedCallback`; mudanças em `data-project` após mount não re-carregam entradas
-- [ ] **Loading e erro no painel** — sem estado de carregamento nem mensagem de erro quando fetch falha; painel abre vazio silenciosamente
+- [x] **Dark mode no widget** — `prefers-color-scheme` + `data-theme="dark|light|auto"` implementados
+- [x] **Theming via atributos** — `data-theme`, `data-position` com `observedAttributes` + `attributeChangedCallback`
+- [x] **Markdown no widget** — negrito, italic, inline-code, listas renderizados no painel
+- [x] **Posição configurável** — `data-position="bottom-left|bottom-right|top-right"` exposto
+- [x] **Fechar com Escape** — listener de `keydown` + `disconnectedCallback` adicionados
+- [x] **`observedAttributes`** — `attributeChangedCallback` implementado; mudanças recarregam entradas
+- [x] **Loading e erro no painel** — estados de loading/empty/error implementados com mensagens amigáveis
 
 ---
 
@@ -137,8 +137,8 @@ O widget (`packages/widget/src/index.ts`) está funcional mas básico. Lacunas i
 Lacunas identificadas em `apps/server/src/`:
 
 - [ ] **Paginação** — `listEntries` retorna tudo sem limit/offset; projetos com muitas entries vão degradar performance e o widget já limita a 5 no cliente
-- [ ] **Rate limiting** — nenhum middleware de rate limit em nenhuma rota; `/api/auth/sign-in` e `/api/auth/magic-link/send` estão abertos a brute-force
-- [ ] **Duplicar entry** — sem rota `POST /api/entries/:id/duplicate`; funcionalidade útil que exige só uma query
+- [x] **Rate limiting** — middleware de sliding window in-memory; 10/min em sign-in, 5/min em magic-link
+- [x] **Duplicar entry** — `POST /api/entries/:id/duplicate` implementado (query + service + rota + dashboard)
 - [ ] **Reordenar entries** — publishedAt é imutável após publish; sem forma de ajustar a ordem de exibição
 - [ ] **Publicação agendada** — schema não tem campo `scheduledAt`; adicionar coluna + job de publicação via `setInterval` no boot
 - [ ] **Webhook on publish** — sem tabela `webhooks` nem dispatch; útil para integrar com Slack, CI, etc.
@@ -162,7 +162,7 @@ Lacunas identificadas em `apps/server/src/`:
 - [ ] **Cobertura de testes do dashboard** — zero testes em `apps/dashboard`; adicionar testes de composables com Vitest + `@vue/test-utils`
 - [ ] **Testes E2E** — sem Playwright ou similar; fluxo crítico (login → criar entry → publicar → verificar página pública) sem cobertura automatizada
 - [ ] **Storybook ou catálogo de componentes** — `TagPill`, `StatusBadge`, `WidgetPreview`, `Toast`, `CommandPalette` sem documentação visual isolada
-- [ ] **Healthcheck endpoint** — sem `GET /health`; Docker e load balancers precisam de um endpoint de liveness/readiness
+- [x] **Healthcheck endpoint** — `GET /health` retorna `{ status, uptime, ts }`
 - [ ] **Métricas de uso** — sem logging estruturado de eventos (entry publicada, widget carregado, etc.); dificulta entender adoção
 
 ---

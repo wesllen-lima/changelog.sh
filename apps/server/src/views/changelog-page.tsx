@@ -337,6 +337,32 @@ function css(accent: string): string {
       .entry { grid-template-columns: 56px 1px 1fr; gap: 0 18px; }
       .entry-date-day { font-size: 30px; }
     }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #151513;
+        --surface: #1d1d1b;
+        --border: rgba(255,255,255,.07);
+        --border-md: rgba(255,255,255,.11);
+        --text: #f0ede8;
+        --muted: #a09d98;
+        --dimmed: #68655f;
+        color-scheme: dark;
+      }
+      .nav {
+        background: rgba(21,21,19,.88);
+      }
+      .rss-btn {
+        background: rgba(255,255,255,.04);
+      }
+      .prose code {
+        background: rgba(255,255,255,.08);
+        border-color: rgba(255,255,255,.1);
+      }
+      .footer-right {
+        color: #555552;
+      }
+    }
   `
 }
 

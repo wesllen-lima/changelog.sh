@@ -2,17 +2,31 @@
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import WidgetPreview from '../components/WidgetPreview.vue'
+import TagPill from '../components/TagPill.vue'
 import { useProjects } from '../composables/useProjects'
 import { useApiKeys } from '../composables/useApiKeys'
 import { useToast } from '../composables/useToast'
-import type { WidgetEntry } from '@changelog/types'
+import type { WidgetEntry, CustomTag } from '@changelog/types'
 
 const { current, updateProject, deleteProject } = useProjects()
 const { keys, newKeyPlaintext, fetchKeys, generateKey, revokeKey, clearNewKey } = useApiKeys()
 const toast = useToast()
 
+const DEFAULT_TAGS: CustomTag[] = [
+  { name: 'new', color: '#0a6640' },
+  { name: 'fix', color: '#b91c1c' },
+  { name: 'improvement', color: '#1d4ed8' },
+  { name: 'performance', color: '#92400e' },
+]
+
 // Project form
 const form = reactive({ name: '', description: '', accentColor: '#0a6640', slug: '' })
+
+// Tags
+const customTags = ref<CustomTag[]>([])
+const newTagName = ref('')
+const newTagColor = ref('#0a6640')
+const savingTags = ref(false)
 const saving = ref(false)
 const saveOk = ref(false)
 
@@ -89,6 +103,31 @@ async function handleSave() {
   }
 }
 
+async function saveTags(tags: CustomTag[]): Promise<void> {
+  if (!current.value || savingTags.value) return
+  savingTags.value = true
+  try {
+    const result = await updateProject(current.value.id, { customTags: tags })
+    if (result.ok) customTags.value = tags
+    else toast.error('Failed to save tags')
+  } finally {
+    savingTags.value = false
+  }
+}
+
+async function addCustomTag(): Promise<void> {
+  const name = newTagName.value.trim().toLowerCase()
+  if (!name || customTags.value.some((t) => t.name === name)) return
+  const next = [...customTags.value, { name, color: newTagColor.value }]
+  await saveTags(next)
+  newTagName.value = ''
+  newTagColor.value = '#0a6640'
+}
+
+async function removeCustomTag(name: string): Promise<void> {
+  await saveTags(customTags.value.filter((t) => t.name !== name))
+}
+
 async function handleGenerateKey() {
   if (!current.value || !newKeyLabel.value.trim() || generatingKey.value) return
   generatingKey.value = true
@@ -119,6 +158,8 @@ onMounted(() => {
     form.description = current.value.description ?? ''
     form.accentColor = current.value.accentColor ?? '#0a6640'
     form.slug = current.value.slug
+    customTags.value =
+      current.value.customTags.length > 0 ? current.value.customTags : [...DEFAULT_TAGS]
     fetchKeys(current.value.slug)
   }
 })
@@ -129,6 +170,7 @@ watch(current, (p) => {
     form.description = p.description ?? ''
     form.accentColor = p.accentColor ?? '#0a6640'
     form.slug = p.slug
+    customTags.value = p.customTags.length > 0 ? p.customTags : [...DEFAULT_TAGS]
     fetchKeys(p.slug)
   }
 })
@@ -474,6 +516,113 @@ function cancelDelete(): void {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <hr style="border: none; border-top: 1px solid var(--border); margin-bottom: 36px">
+
+      <!-- ── Tags ── -->
+      <section style="margin-bottom: 36px">
+        <div style="margin-bottom: 16px">
+          <h2 style="font-size: 15px; font-weight: 600; margin-bottom: 4px">
+            Tags
+          </h2>
+          <p style="font-size: 12px; color: var(--muted)">
+            Define the tags available when writing entries for this project.
+          </p>
+        </div>
+
+        <!-- Current tags -->
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px">
+          <div
+            v-for="tag in customTags"
+            :key="tag.name"
+            style="display: flex; align-items: center; gap: 4px"
+          >
+            <TagPill
+              :tag="tag.name"
+              :color="tag.color"
+            />
+            <button
+              @click="removeCustomTag(tag.name)"
+              :disabled="savingTags"
+              style="
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: var(--dimmed);
+                padding: 2px 4px;
+                font-size: 13px;
+                line-height: 1;
+                border-radius: 3px;
+              "
+              @mouseover="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--red)')"
+              @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--dimmed)')"
+            >
+              ×
+            </button>
+          </div>
+          <span
+            v-if="customTags.length === 0"
+            style="font-size: 13px; color: var(--dimmed)"
+          >No tags yet</span>
+        </div>
+
+        <!-- Add new tag -->
+        <div style="display: flex; align-items: center; gap: 8px">
+          <!-- Color swatch -->
+          <div
+            :style="{
+              width: '32px',
+              height: '32px',
+              borderRadius: 'var(--r-sm)',
+              background: newTagColor,
+              border: '1px solid var(--border-md)',
+              cursor: 'pointer',
+              position: 'relative',
+              overflow: 'hidden',
+              flex: 'none',
+            }"
+          >
+            <input
+              type="color"
+              v-model="newTagColor"
+              style="
+                opacity: 0;
+                position: absolute;
+                inset: 0;
+                cursor: pointer;
+                width: 100%;
+                height: 100%;
+              "
+            >
+          </div>
+          <input
+            v-model="newTagName"
+            placeholder="Tag name, e.g. security"
+            @keydown.enter="addCustomTag"
+            :style="{ ...inputStyle, flex: '1' }"
+            @focus="focusInput"
+            @blur="blurInput"
+          >
+          <button
+            @click="addCustomTag"
+            :disabled="!newTagName.trim() || savingTags"
+            style="
+              padding: 9px 14px;
+              background: var(--text);
+              color: var(--bg);
+              border: none;
+              border-radius: var(--r-sm);
+              font-size: 13px;
+              font-weight: 500;
+              font-family: var(--font-ui);
+              cursor: pointer;
+              white-space: nowrap;
+            "
+          >
+            Add tag
+          </button>
         </div>
       </section>
 

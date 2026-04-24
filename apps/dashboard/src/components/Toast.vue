@@ -1,7 +1,13 @@
 <script setup lang="ts">
+import type { Toast } from '../composables/useToast'
 import { useToast } from '../composables/useToast'
 
 const { toasts, remove } = useToast()
+
+function runAction(toast: Toast): void {
+  toast.action?.fn()
+  remove(toast.id)
+}
 
 const icons = {
   success: `<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
@@ -78,10 +84,7 @@ const colors = {
           </div>
           <button
             v-if="toast.action"
-            @click="
-              toast.action?.fn()
-              remove(toast.id)
-            "
+            @click="runAction(toast)"
             style="
               background: none;
               border: none;

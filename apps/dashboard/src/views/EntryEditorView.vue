@@ -5,11 +5,13 @@ import AppLayout from '../components/AppLayout.vue'
 import TagPill from '../components/TagPill.vue'
 import { useEntries } from '../composables/useEntries'
 import { useProjects } from '../composables/useProjects'
+import { useToast } from '../composables/useToast'
 
 const route = useRoute()
 const router = useRouter()
 const { entries, createEntry, updateEntry, publishEntry } = useEntries()
 const { current } = useProjects()
+const toast = useToast()
 
 const isNew = computed(() => route.name === 'entry-new')
 
@@ -28,9 +30,7 @@ type Snapshot = { title: string; body: string; tags: string[] }
 const lastSaved = ref<Snapshot | null>(null)
 
 const isDirty = computed(() => {
-  if (isNew.value && !entryId.value) {
-    return title.value.trim() !== '' || body.value.trim() !== ''
-  }
+  if (isNew.value && !entryId.value) return title.value.trim() !== '' || body.value.trim() !== ''
   if (!lastSaved.value) return false
   return (
     title.value !== lastSaved.value.title ||
@@ -44,30 +44,32 @@ const unusedTags = computed(() => AVAILABLE_TAGS.filter((t) => !tags.value.inclu
 
 const wordCount = computed(() => body.value.split(/\s+/).filter(Boolean).length)
 
-// Minimal markdown → HTML (preview only)
 const previewHtml = computed(() => {
   if (!body.value.trim()) return ''
   return body.value
     .split('\n')
     .map((line) => {
-      if (line.startsWith('## ')) return `<h2>${escape(line.slice(3))}</h2>`
-      if (line.startsWith('# ')) return `<h1>${escape(line.slice(2))}</h1>`
-      if (line.startsWith('- ')) return `<li>${inlineEscape(line.slice(2))}</li>`
+      if (line.startsWith('### ')) return `<h3>${esc(line.slice(4))}</h3>`
+      if (line.startsWith('## ')) return `<h2>${esc(line.slice(3))}</h2>`
+      if (line.startsWith('# ')) return `<h1>${esc(line.slice(2))}</h1>`
+      if (line.startsWith('> ')) return `<blockquote>${inline(line.slice(2))}</blockquote>`
+      if (line.startsWith('- ')) return `<li>${inline(line.slice(2))}</li>`
       if (line === '---') return '<hr>'
       if (!line.trim()) return '<br>'
-      return `<p>${inlineEscape(line)}</p>`
+      return `<p>${inline(line)}</p>`
     })
     .join('\n')
-    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    .replace(/(<li>[\s\S]*?<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
 })
 
-function escape(s: string) {
+function esc(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function inlineEscape(s: string) {
-  let r = escape(s)
+function inline(s: string) {
+  let r = esc(s)
   r = r.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  r = r.replace(/\*(.+?)\*/g, '<em>$1</em>')
   r = r.replace(/`([^`]+)`/g, '<code>$1</code>')
   return r
 }
@@ -95,6 +97,7 @@ async function handleSaveDraft() {
         entryId.value = result.data.id
         lastSaved.value = snapshotCurrent()
         router.replace(`/entries/${result.data.id}`)
+        toast.success('Draft saved')
       } else {
         saveError.value = result.error
         return
@@ -110,6 +113,7 @@ async function handleSaveDraft() {
         return
       }
       lastSaved.value = snapshotCurrent()
+      toast.success('Draft saved')
     }
     saved.value = true
     setTimeout(() => (saved.value = false), 2000)
@@ -123,12 +127,11 @@ function onKeyDown(e: KeyboardEvent) {
     e.preventDefault()
     handleSaveDraft()
   }
+  if (e.key === 'Escape' && tagMenuOpen.value) tagMenuOpen.value = false
 }
 
 onBeforeRouteLeave(() => {
-  if (isDirty.value) {
-    return window.confirm('You have unsaved changes. Leave without saving?')
-  }
+  if (isDirty.value) return window.confirm('You have unsaved changes. Leave without saving?')
 })
 
 async function handlePublish() {
@@ -137,6 +140,9 @@ async function handlePublish() {
   publishing.value = true
   try {
     await publishEntry(entryId.value ?? (route.params.id as string))
+    toast.success('Entry published', {
+      action: { label: 'View', fn: () => window.open(`/${current.value?.slug}`, '_blank') },
+    })
     publishedOk.value = true
     setTimeout(() => {
       publishedOk.value = false
@@ -162,9 +168,7 @@ onMounted(() => {
   }
 })
 
-onUnmounted(() => {
-  window.removeEventListener('keydown', onKeyDown)
-})
+onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 </script>
 
 <template>
@@ -175,14 +179,15 @@ onUnmounted(() => {
         height: 56px;
         flex-shrink: 0;
         border-bottom: 1px solid var(--border);
-        padding: 0 28px;
+        padding: 0 20px 0 16px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         background: var(--surface);
       "
     >
-      <div style="display: flex; align-items: center; gap: 10px">
+      <!-- Left: back + breadcrumb -->
+      <div style="display: flex; align-items: center; gap: 6px">
         <button
           @click="router.push('/entries')"
           style="
@@ -190,10 +195,13 @@ onUnmounted(() => {
             border: none;
             cursor: pointer;
             color: var(--dimmed);
-            padding: 4px;
-            border-radius: 4px;
+            padding: 6px;
+            border-radius: var(--r-sm);
             display: flex;
+            align-items: center;
           "
+          @mouseover="(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--bg2)')"
+          @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.background = 'none')"
         >
           <svg
             width="16"
@@ -210,23 +218,37 @@ onUnmounted(() => {
             />
           </svg>
         </button>
-        <h1 style="font-size: 20px; font-weight: 600; color: var(--text)">
-          {{ isNew ? 'New entry' : 'Edit entry' }}
-        </h1>
+        <span style="font-size: 13px; color: var(--dimmed)">Entries</span>
+        <span style="font-size: 13px; color: var(--faint)">/</span>
+        <span style="font-size: 13px; font-weight: 500; color: var(--text)">
+          {{ isNew ? 'New entry' : title || 'Edit entry' }}
+        </span>
       </div>
+
+      <!-- Right: status + actions -->
       <div style="display: flex; align-items: center; gap: 8px">
         <span
           v-if="saved"
-          style="font-family: var(--font-mono); font-size: 12px; color: var(--accent)"
+          style="
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--accent);
+            animation: fadeIn 150ms;
+          "
         >✓ Saved</span>
         <span
           v-if="publishedOk"
-          style="font-family: var(--font-mono); font-size: 12px; color: var(--accent)"
+          style="font-family: var(--font-mono); font-size: 11px; color: var(--accent)"
         >✓ Published!</span>
         <span
           v-if="saveError"
-          style="font-family: var(--font-mono); font-size: 12px; color: var(--red)"
+          style="font-family: var(--font-mono); font-size: 11px; color: var(--red)"
         >{{ saveError }}</span>
+        <span
+          v-if="isDirty && !saving"
+          style="font-family: var(--font-mono); font-size: 11px; color: var(--dimmed)"
+        >Unsaved</span>
+
         <button
           @click="handleSaveDraft"
           :disabled="saving"
@@ -240,12 +262,13 @@ onUnmounted(() => {
             font-family: var(--font-ui);
             cursor: pointer;
             color: var(--text);
+            white-space: nowrap;
           "
           @mouseover="
             (e) => ((e.currentTarget as HTMLElement).style.borderColor = 'var(--border-dk)')
           "
         >
-          Save draft
+          {{ saving ? 'Saving…' : 'Save draft' }}
         </button>
         <button
           @click="handlePublish"
@@ -260,11 +283,12 @@ onUnmounted(() => {
             font-weight: 500;
             font-family: var(--font-ui);
             cursor: pointer;
+            white-space: nowrap;
           "
           @mouseover="(e) => ((e.currentTarget as HTMLElement).style.opacity = '0.87')"
           @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.opacity = '1')"
         >
-          Publish
+          {{ publishing ? 'Publishing…' : 'Publish →' }}
         </button>
       </div>
     </div>
@@ -279,13 +303,14 @@ onUnmounted(() => {
           width: 100%;
           border: none;
           outline: none;
-          font-size: 22px;
+          font-size: 24px;
           font-weight: 600;
           font-family: var(--font-ui);
           color: var(--text);
           background: transparent;
           margin-bottom: 14px;
           caret-color: var(--accent);
+          line-height: 1.3;
         "
       >
 
@@ -314,57 +339,82 @@ onUnmounted(() => {
               background: var(--bg2);
               border: 1px dashed var(--border-dk);
               border-radius: 99px;
-              padding: 2px 10px;
+              padding: 3px 10px;
               font-size: 11px;
               font-family: var(--font-mono);
               color: var(--dimmed);
               cursor: pointer;
+              transition:
+                border-color 120ms,
+                color 120ms;
+            "
+            @mouseover="
+              (e) => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = 'var(--accent)'
+                el.style.color = 'var(--accent)'
+              }
+            "
+            @mouseleave="
+              (e) => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = 'var(--border-dk)'
+                el.style.color = 'var(--dimmed)'
+              }
             "
           >
             + tag
           </button>
-          <div
-            v-if="tagMenuOpen && unusedTags.length"
-            style="
-              position: absolute;
-              top: calc(100% + 6px);
-              left: 0;
-              z-index: 50;
-              background: var(--surface);
-              box-shadow: var(--sh-lg);
-              border-radius: var(--r-md);
-              overflow: hidden;
-              min-width: 150px;
-            "
-          >
-            <button
-              v-for="t in unusedTags"
-              :key="t"
-              @click="
-                () => {
+          <Transition name="dropdown">
+            <div
+              v-if="tagMenuOpen && unusedTags.length"
+              style="
+                position: absolute;
+                top: calc(100% + 6px);
+                left: 0;
+                z-index: 50;
+                background: var(--surface);
+                box-shadow: var(--sh-lg);
+                border-radius: var(--r-md);
+                border: 1px solid var(--border-md);
+                overflow: hidden;
+                min-width: 160px;
+              "
+            >
+              <button
+                v-for="t in unusedTags"
+                :key="t"
+                @click="
                   tags.push(t)
                   tagMenuOpen = false
-                }
-              "
-              style="
-                width: 100%;
-                background: none;
-                border: none;
-                padding: 9px 14px;
-                text-align: left;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                font-family: var(--font-ui);
-              "
-              @mouseover="(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--bg2)')"
-              @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.background = 'none')"
-            >
-              <TagPill :tag="t" />
-            </button>
-          </div>
+                "
+                style="
+                  width: 100%;
+                  background: none;
+                  border: none;
+                  padding: 9px 14px;
+                  text-align: left;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  font-family: var(--font-ui);
+                  transition: background 80ms;
+                "
+                @mouseover="
+                  (e) => ((e.currentTarget as HTMLElement).style.background = 'var(--bg)')
+                "
+                @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.background = 'none')"
+              >
+                <TagPill :tag="t" />
+              </button>
+            </div>
+          </Transition>
         </div>
+        <span
+          v-if="unusedTags.length === 0 && tags.length > 0"
+          style="font-family: var(--font-mono); font-size: 11px; color: var(--dimmed)"
+        >All tags added</span>
       </div>
 
       <hr style="border: none; border-top: 1px solid var(--border); margin-bottom: 20px">
@@ -393,23 +443,27 @@ onUnmounted(() => {
               color: var(--dimmed);
               letter-spacing: 0.05em;
               text-transform: uppercase;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
             "
           >
-            Markdown
+            <span>Markdown</span>
+            <span style="color: var(--faint)">⌘S to save</span>
           </div>
           <textarea
             v-model="body"
             placeholder="## What's new?&#10;&#10;Describe this update…&#10;&#10;- Feature A&#10;- Feature B"
             style="
               width: 100%;
-              min-height: 280px;
+              min-height: 320px;
               border: none;
               outline: none;
               background: transparent;
               padding: 16px;
               font-family: var(--font-mono);
               font-size: 13px;
-              line-height: 1.75;
+              line-height: 1.8;
               color: var(--text);
               resize: vertical;
               caret-color: var(--accent);
@@ -433,17 +487,17 @@ onUnmounted(() => {
             Preview
           </div>
           <div
-            class="prose"
-            style="padding: 16px; min-height: 280px"
             v-if="previewHtml"
+            class="prose"
+            style="padding: 16px; min-height: 320px"
             v-html="previewHtml"
           />
           <div
             v-else
             style="
               padding: 16px;
-              min-height: 280px;
-              color: var(--dimmed);
+              min-height: 320px;
+              color: var(--faint);
               font-style: italic;
               font-size: 13px;
             "
@@ -466,9 +520,14 @@ onUnmounted(() => {
         align-items: center;
       "
     >
-      <span style="font-family: var(--font-mono); font-size: 11px; color: var(--dimmed)">
-        {{ wordCount }} words · Markdown · ⌘S to save
-      </span>
+      <div style="display: flex; align-items: center; gap: 16px">
+        <span style="font-family: var(--font-mono); font-size: 11px; color: var(--dimmed)">
+          {{ wordCount }} {{ wordCount === 1 ? 'word' : 'words' }}
+        </span>
+        <span style="font-family: var(--font-mono); font-size: 11px; color: var(--faint)">
+          ⌘S save · ⌘K commands
+        </span>
+      </div>
       <div style="display: flex; gap: 8px">
         <button
           @click="handleSaveDraft"
@@ -485,7 +544,7 @@ onUnmounted(() => {
             color: var(--text);
           "
         >
-          Save draft
+          {{ saving ? 'Saving…' : 'Save draft' }}
         </button>
         <button
           @click="handlePublish"
@@ -510,3 +569,15 @@ onUnmounted(() => {
     </div>
   </AppLayout>
 </template>
+
+<style scoped>
+.dropdown-enter-active {
+  animation: scaleIn 150ms var(--ease-spring) both;
+}
+.dropdown-leave-active {
+  transition: opacity 100ms;
+}
+.dropdown-leave-to {
+  opacity: 0;
+}
+</style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useProjects } from '../composables/useProjects'
@@ -10,8 +10,21 @@ const { user, signOut } = useAuth()
 const { projects, current, fetchProjects, setCurrentProject } = useProjects()
 
 const projectMenuOpen = ref(false)
+const cmdHintVisible = ref(false)
 
-onMounted(fetchProjects)
+onMounted(() => {
+  fetchProjects()
+  setTimeout(() => (cmdHintVisible.value = true), 1400)
+})
+
+function closeOnOutside(e: MouseEvent) {
+  if (!(e.target as HTMLElement).closest('[data-project-menu]')) {
+    projectMenuOpen.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('mousedown', closeOnOutside))
+onUnmounted(() => document.removeEventListener('mousedown', closeOnOutside))
 
 const navGroups = [
   {
@@ -29,6 +42,10 @@ const navGroups = [
 
 function isActive(path: string) {
   return route.path.startsWith(path)
+}
+
+function projectColor(accentColor: string | null) {
+  return accentColor ?? '#0a6640'
 }
 </script>
 
@@ -98,7 +115,10 @@ function isActive(path: string) {
       </div>
 
       <!-- Project selector -->
-      <div style="margin: 0 10px 14px; position: relative">
+      <div
+        style="margin: 0 10px 14px; position: relative"
+        data-project-menu
+      >
         <button
           @click="projectMenuOpen = !projectMenuOpen"
           style="
@@ -107,16 +127,35 @@ function isActive(path: string) {
             box-shadow: var(--sh-sm);
             border-radius: var(--r-md);
             border: none;
-            padding: 10px 12px;
+            padding: 9px 12px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: space-between;
             gap: 8px;
             text-align: left;
           "
+          @mouseover="(e) => ((e.currentTarget as HTMLElement).style.boxShadow = 'var(--sh-md)')"
+          @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.boxShadow = 'var(--sh-sm)')"
         >
-          <div style="overflow: hidden">
+          <!-- Color badge -->
+          <div
+            style="
+              width: 22px;
+              height: 22px;
+              border-radius: var(--r-xs);
+              flex-shrink: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+            :style="{ background: projectColor(current?.accentColor ?? null) }"
+          >
+            <span style="color: white; font-size: 10px; font-weight: 600; line-height: 1">
+              {{ (current?.name?.[0] ?? 'P').toUpperCase() }}
+            </span>
+          </div>
+
+          <div style="overflow: hidden; flex: 1">
             <div
               style="
                 font-size: 13px;
@@ -132,7 +171,7 @@ function isActive(path: string) {
             <div
               style="
                 font-family: var(--font-mono);
-                font-size: 11px;
+                font-size: 10px;
                 color: var(--dimmed);
                 white-space: nowrap;
                 overflow: hidden;
@@ -142,12 +181,14 @@ function isActive(path: string) {
               {{ current?.slug ?? '—' }}
             </div>
           </div>
+
           <svg
             width="12"
             height="12"
             viewBox="0 0 12 12"
             fill="none"
-            style="flex-shrink: 0"
+            style="flex-shrink: 0; transition: transform 150ms var(--ease-out)"
+            :style="{ transform: projectMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }"
           >
             <path
               d="M3 5l3 3 3-3"
@@ -159,79 +200,127 @@ function isActive(path: string) {
           </svg>
         </button>
 
-        <!-- Project dropdown -->
-        <div
-          v-if="projectMenuOpen"
-          style="
-            position: absolute;
-            top: calc(100% + 4px);
-            left: 0;
-            right: 0;
-            z-index: 50;
-            background: var(--surface);
-            box-shadow: var(--sh-lg);
-            border-radius: var(--r-md);
-            overflow: hidden;
-          "
-        >
-          <button
-            v-for="p in projects"
-            :key="p.id"
-            @click="
-              () => {
+        <!-- Dropdown -->
+        <Transition name="dropdown">
+          <div
+            v-if="projectMenuOpen"
+            style="
+              position: absolute;
+              top: calc(100% + 4px);
+              left: 0;
+              right: 0;
+              z-index: 50;
+              background: var(--surface);
+              box-shadow: var(--sh-lg);
+              border-radius: var(--r-md);
+              border: 1px solid var(--border-md);
+              overflow: hidden;
+            "
+          >
+            <button
+              v-for="p in projects"
+              :key="p.id"
+              @click="
                 setCurrentProject(p)
                 projectMenuOpen = false
-              }
-            "
-            style="
-              width: 100%;
-              background: none;
-              border: none;
-              padding: 10px 12px;
-              text-align: left;
-              cursor: pointer;
-              font-family: var(--font-ui);
-              font-size: 13px;
-              color: var(--text);
-              display: block;
-            "
-            :style="{ background: current?.id === p.id ? 'var(--bg2)' : 'transparent' }"
-          >
-            {{ p.name }}
-            <span
-              style="
-                font-family: var(--font-mono);
-                font-size: 11px;
-                color: var(--dimmed);
-                margin-left: 6px;
-              "
-            >{{ p.slug }}</span>
-          </button>
-          <div style="border-top: 1px solid var(--border); padding: 6px 8px">
-            <button
-              @click="
-                () => {
-                  router.push('/projects')
-                  projectMenuOpen = false
-                }
               "
               style="
                 width: 100%;
                 background: none;
                 border: none;
-                padding: 7px 8px;
+                padding: 9px 12px;
                 text-align: left;
                 cursor: pointer;
-                font-size: 12px;
-                color: var(--muted);
-                border-radius: var(--r-sm);
                 font-family: var(--font-ui);
+                font-size: 13px;
+                color: var(--text);
+                display: flex;
+                align-items: center;
+                gap: 8px;
               "
+              @mouseover="(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--bg)')"
+              @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.background = 'none')"
             >
-              + New project
+              <div
+                style="
+                  width: 16px;
+                  height: 16px;
+                  border-radius: 3px;
+                  flex-shrink: 0;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+                :style="{ background: projectColor(p.accentColor) }"
+              >
+                <span style="color: white; font-size: 8px; font-weight: 700">{{
+                  p.name[0].toUpperCase()
+                }}</span>
+              </div>
+              <span
+                style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"
+              >{{ p.name }}</span>
+              <svg
+                v-if="current?.id === p.id"
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+              >
+                <path
+                  d="M2 6l3 3 5-5"
+                  stroke="var(--accent)"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
             </button>
+
+            <div style="border-top: 1px solid var(--border); padding: 4px 6px">
+              <button
+                @click="
+                  router.push('/projects')
+                  projectMenuOpen = false
+                "
+                style="
+                  width: 100%;
+                  background: none;
+                  border: none;
+                  padding: 7px 8px;
+                  text-align: left;
+                  cursor: pointer;
+                  font-size: 12px;
+                  color: var(--muted);
+                  border-radius: var(--r-sm);
+                  font-family: var(--font-ui);
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                "
+                @mouseover="
+                  (e) => ((e.currentTarget as HTMLElement).style.background = 'var(--bg)')
+                "
+                @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.background = 'none')"
+              >
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                >
+                  <path
+                    d="M6 1v10M1 6h10"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                New project
+              </button>
+            </div>
           </div>
-        </div>
+        </Transition>
       </div>
 
       <!-- Nav -->
@@ -244,13 +333,13 @@ function isActive(path: string) {
           <div
             style="
               font-family: var(--font-mono);
-              font-size: 10px;
+              font-size: 9.5px;
               font-weight: 500;
               color: var(--dimmed);
               text-transform: uppercase;
-              letter-spacing: 0.06em;
+              letter-spacing: 0.07em;
               padding: 0 8px;
-              margin-bottom: 4px;
+              margin-bottom: 3px;
             "
           >
             {{ group.label }}
@@ -264,7 +353,7 @@ function isActive(path: string) {
               border: none;
               border-radius: var(--r-sm);
               padding: 7px 8px;
-              margin-bottom: 2px;
+              margin-bottom: 1px;
               display: flex;
               align-items: center;
               gap: 8px;
@@ -272,14 +361,26 @@ function isActive(path: string) {
               text-align: left;
               font-family: var(--font-ui);
               font-size: 13px;
+              transition: background 100ms;
             "
             :style="{
-              background: isActive(item.path) ? 'rgba(0,0,0,0.05)' : 'transparent',
+              background: isActive(item.path) ? 'rgba(0,0,0,0.055)' : 'transparent',
               fontWeight: isActive(item.path) ? '500' : '400',
               color: isActive(item.path) ? 'var(--text)' : 'var(--muted)',
             }"
+            @mouseover="
+              (e) => {
+                if (!isActive(item.path))
+                  (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.03)'
+              }
+            "
+            @mouseleave="
+              (e) => {
+                if (!isActive(item.path))
+                  (e.currentTarget as HTMLElement).style.background = 'transparent'
+              }
+            "
           >
-            <!-- Entries icon -->
             <svg
               v-if="item.icon === 'entries'"
               width="14"
@@ -294,9 +395,8 @@ function isActive(path: string) {
                 stroke-linecap="round"
               />
             </svg>
-            <!-- Projects icon -->
             <svg
-              v-if="item.icon === 'projects'"
+              v-else-if="item.icon === 'projects'"
               width="14"
               height="14"
               viewBox="0 0 14 14"
@@ -339,9 +439,8 @@ function isActive(path: string) {
                 stroke-width="1.3"
               />
             </svg>
-            <!-- Settings icon -->
             <svg
-              v-if="item.icon === 'settings'"
+              v-else-if="item.icon === 'settings'"
               width="14"
               height="14"
               viewBox="0 0 14 14"
@@ -364,7 +463,75 @@ function isActive(path: string) {
             {{ item.label }}
           </button>
         </div>
+
+        <!-- Public changelog link -->
+        <div style="margin-top: 4px; padding: 0 8px">
+          <a
+            v-if="current"
+            :href="`/${current.slug}`"
+            target="_blank"
+            rel="noopener"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              padding: 7px 0;
+              font-size: 12px;
+              color: var(--dimmed);
+              text-decoration: none;
+            "
+            @mouseover="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--muted)')"
+            @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--dimmed)')"
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 14 14"
+              fill="none"
+            >
+              <path
+                d="M10 3H3v8h8V7M10 3l1 1M10 3H7M11 4L7.5 7.5"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            Ver changelog público
+          </a>
+        </div>
       </nav>
+
+      <!-- Command hint -->
+      <Transition name="fade">
+        <div
+          v-if="cmdHintVisible"
+          style="
+            margin: 0 10px 8px;
+            padding: 7px 10px;
+            background: var(--bg2);
+            border-radius: var(--r-sm);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: default;
+          "
+        >
+          <kbd
+            style="
+              font-family: var(--font-mono);
+              font-size: 10px;
+              color: var(--dimmed);
+              background: var(--surface);
+              border: 1px solid var(--border-md);
+              border-radius: 4px;
+              padding: 1px 5px;
+            "
+          >⌘K</kbd>
+          <span style="font-size: 11px; color: var(--dimmed)">Command palette</span>
+        </div>
+      </Transition>
 
       <!-- User -->
       <div
@@ -388,7 +555,7 @@ function isActive(path: string) {
             justify-content: center;
           "
         >
-          <span style="color: white; font-size: 11px; font-weight: 500">
+          <span style="color: white; font-size: 11px; font-weight: 600">
             {{ user?.name?.[0]?.toUpperCase() ?? 'U' }}
           </span>
         </div>
@@ -428,6 +595,8 @@ function isActive(path: string) {
             padding: 4px;
             border-radius: 4px;
           "
+          @mouseover="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--muted)')"
+          @mouseleave="(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--dimmed)')"
         >
           <svg
             width="14"
@@ -447,9 +616,28 @@ function isActive(path: string) {
       </div>
     </aside>
 
-    <!-- Main slot -->
+    <!-- Main -->
     <main style="flex: 1; display: flex; flex-direction: column; overflow: hidden">
       <slot />
     </main>
   </div>
 </template>
+
+<style scoped>
+.dropdown-enter-active {
+  animation: scaleIn 160ms var(--ease-spring) both;
+}
+.dropdown-leave-active {
+  animation: fadeIn 100ms ease reverse both;
+}
+
+.fade-enter-active {
+  animation: fadeUp 400ms var(--ease-spring) both;
+}
+.fade-leave-active {
+  transition: opacity 200ms;
+}
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

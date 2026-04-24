@@ -4,10 +4,12 @@ import AppLayout from '../components/AppLayout.vue'
 import WidgetPreview from '../components/WidgetPreview.vue'
 import { useProjects } from '../composables/useProjects'
 import { useApiKeys } from '../composables/useApiKeys'
+import { useToast } from '../composables/useToast'
 import type { WidgetEntry } from '@changelog/types'
 
 const { current, updateProject, deleteProject } = useProjects()
 const { keys, newKeyPlaintext, fetchKeys, generateKey, revokeKey, clearNewKey } = useApiKeys()
+const toast = useToast()
 
 // Project form
 const form = reactive({ name: '', description: '', accentColor: '#0a6640', slug: '' })
@@ -50,20 +52,23 @@ const previewEntries = computed<WidgetEntry[]>(() => [
   },
 ])
 
+const origin = window.location.origin
 const embedSnippet = computed(
   () =>
-    `<script src="${window.location.origin}/widget.js"><\/script>\n<changelog-widget project-id="${current.value?.slug ?? 'your-project'}"><\/changelog-widget>`,
+    `<script src="${origin}/widget.js"><\/script>\n<changelog-widget project-id="${current.value?.slug ?? 'your-project'}"><\/changelog-widget>`,
 )
 
 function copySnippet() {
   navigator.clipboard.writeText(embedSnippet.value).catch(() => {})
   snippetCopied.value = true
+  toast.success('Snippet copied')
   setTimeout(() => (snippetCopied.value = false), 2000)
 }
 
 function copyKey(key: string) {
   navigator.clipboard.writeText(key).catch(() => {})
   keyCopied.value = true
+  toast.success('Key copied')
   setTimeout(() => (keyCopied.value = false), 2000)
 }
 
@@ -77,6 +82,7 @@ async function handleSave() {
       accentColor: form.accentColor,
     })
     saveOk.value = true
+    toast.success('Settings saved')
     setTimeout(() => (saveOk.value = false), 2000)
   } finally {
     saving.value = false
@@ -89,6 +95,7 @@ async function handleGenerateKey() {
   try {
     await generateKey(current.value.slug, newKeyLabel.value.trim())
     newKeyLabel.value = ''
+    toast.success('API key generated', { message: "Copy it now — it won't be shown again." })
   } finally {
     generatingKey.value = false
   }
@@ -100,6 +107,7 @@ async function handleDelete() {
   try {
     await deleteProject(current.value.id)
     deleteModalOpen.value = false
+    toast.success('Project deleted')
   } finally {
     deleting.value = false
   }
@@ -423,7 +431,7 @@ function blurInput(e: Event) {
           <div style="padding: 16px 20px; overflow-x: auto">
             <pre
               style="font-family: var(--font-mono); font-size: 13px; line-height: 1.8; margin: 0"
-            ><code><span style="color:#7dd3fc;">&lt;script</span> <span style="color:#86efac;">src</span><span style="color:#e2e2e0;">=</span><span style="color:#fca5a5;">"{{ (typeof window !== 'undefined' ? window.location.origin : 'https://your-instance.com') }}/widget.js"</span><span style="color:#7dd3fc;">&gt;&lt;/script&gt;</span>
+            ><code><span style="color:#7dd3fc;">&lt;script</span> <span style="color:#86efac;">src</span><span style="color:#e2e2e0;">=</span><span style="color:#fca5a5;">"{{ origin }}/widget.js"</span><span style="color:#7dd3fc;">&gt;&lt;/script&gt;</span>
 <span style="color:#7dd3fc;">&lt;changelog-widget</span> <span style="color:#86efac;">project-id</span><span style="color:#e2e2e0;">=</span><span style="color:#fca5a5;">"{{ current?.slug ?? 'your-project' }}"</span><span style="color:#7dd3fc;">&gt;&lt;/changelog-widget&gt;</span></code></pre>
           </div>
         </div>

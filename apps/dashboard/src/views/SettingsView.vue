@@ -784,10 +784,8 @@ function blurInput(e: Event) {
           <div style="display: flex; gap: 8px; justify-content: flex-end">
             <button
               @click="
-                () => {
-                  deleteModalOpen = false
-                  deleteConfirmSlug = ''
-                }
+                deleteModalOpen = false
+                deleteConfirmSlug = ''
               "
               style="
                 padding: 8px 16px;

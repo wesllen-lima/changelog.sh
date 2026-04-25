@@ -2,16 +2,33 @@
 import { ref, onMounted } from 'vue'
 import { useAuth } from '../composables/useAuth'
 
-const { signIn, sendMagicLink, loading, error, magicLinkEnabled, fetchConfig } = useAuth()
+const {
+  signIn,
+  sendMagicLink,
+  requestPasswordReset,
+  loading,
+  error,
+  magicLinkEnabled,
+  passwordResetEnabled,
+  fetchConfig,
+} = useAuth()
 
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const magicLinkSent = ref(false)
+const forgotMode = ref(false)
+const resetSent = ref(false)
 
 onMounted(fetchConfig)
 
 async function handleSubmit() {
+  if (forgotMode.value) {
+    if (!email.value) return
+    const result = await requestPasswordReset(email.value)
+    if (result.ok) resetSent.value = true
+    return
+  }
   if (magicLinkEnabled.value) {
     if (!email.value) return
     const result = await sendMagicLink(email.value)
@@ -20,6 +37,16 @@ async function handleSubmit() {
     if (!email.value || !password.value) return
     await signIn(email.value, password.value)
   }
+}
+
+function enterForgotMode(): void {
+  forgotMode.value = true
+  resetSent.value = false
+}
+
+function exitForgotMode(): void {
+  forgotMode.value = false
+  resetSent.value = false
 }
 </script>
 
@@ -301,6 +328,63 @@ async function handleSubmit() {
           </button>
         </div>
 
+        <!-- Password reset sent -->
+        <div
+          v-else-if="resetSent"
+          style="text-align: center; animation: fadeUp 300ms var(--ease-spring) both"
+        >
+          <div
+            style="
+              width: 56px;
+              height: 56px;
+              border-radius: 50%;
+              background: var(--accent-bg);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0 auto 20px;
+            "
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                stroke="var(--accent)"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 8px">
+            Email enviado
+          </h2>
+          <p style="font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 8px">
+            Link de redefinição enviado para <strong style="color: var(--text)">{{ email }}</strong>
+          </p>
+          <p style="font-size: 12px; color: var(--dimmed); margin-bottom: 28px">
+            Verifique sua caixa de entrada. O link expira em 1 hora.
+          </p>
+          <button
+            @click="exitForgotMode"
+            style="
+              background: none;
+              border: none;
+              cursor: pointer;
+              color: var(--accent);
+              font-size: 13px;
+              font-weight: 500;
+              font-family: var(--font-ui);
+            "
+          >
+            Voltar ao login
+          </button>
+        </div>
+
         <!-- Login form -->
         <div v-else>
           <h2
@@ -312,7 +396,7 @@ async function handleSubmit() {
               animation: fadeUp 300ms var(--ease-spring) both;
             "
           >
-            Bem-vindo de volta
+            {{ forgotMode ? 'Redefinir senha' : 'Bem-vindo de volta' }}
           </h2>
           <p
             style="
@@ -323,9 +407,11 @@ async function handleSubmit() {
             "
           >
             {{
-              magicLinkEnabled
-                ? 'Insira seu email para receber um link de acesso.'
-                : 'Insira suas credenciais para continuar.'
+              forgotMode
+                ? 'Insira seu email para receber o link de redefinição.'
+                : magicLinkEnabled
+                  ? 'Insira seu email para receber um link de acesso.'
+                  : 'Insira suas credenciais para continuar.'
             }}
           </p>
 
@@ -424,7 +510,7 @@ async function handleSubmit() {
               >
             </div>
 
-            <div v-if="magicLinkEnabled === false">
+            <div v-if="magicLinkEnabled === false && !forgotMode">
               <label
                 style="
                   display: block;
@@ -525,7 +611,9 @@ async function handleSubmit() {
 
             <button
               type="submit"
-              :disabled="loading || !email || (magicLinkEnabled === false && !password)"
+              :disabled="
+                loading || !email || (magicLinkEnabled === false && !forgotMode && !password)
+              "
               style="
                 width: 100%;
                 padding: 11px;
@@ -569,7 +657,8 @@ async function handleSubmit() {
                   stroke-linecap="round"
                 />
               </svg>
-              <span v-if="loading">{{ magicLinkEnabled ? 'Enviando…' : 'Entrando…' }}</span>
+              <span v-if="loading">Enviando…</span>
+              <span v-else-if="forgotMode">Enviar link de redefinição</span>
               <span v-else-if="magicLinkEnabled">Enviar link de acesso</span>
               <span v-else-if="magicLinkEnabled === false">Entrar</span>
               <span v-else>Carregando…</span>
@@ -577,11 +666,54 @@ async function handleSubmit() {
           </form>
 
           <p
-            v-if="magicLinkEnabled"
+            v-if="magicLinkEnabled && !forgotMode"
             style="margin-top: 16px; text-align: center; font-size: 12px; color: var(--dimmed)"
           >
             Sem senha — um link é enviado para seu email.
           </p>
+
+          <div
+            v-if="!forgotMode"
+            style="margin-top: 14px; text-align: center"
+          >
+            <button
+              v-if="passwordResetEnabled && magicLinkEnabled === false"
+              type="button"
+              @click="enterForgotMode"
+              style="
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: var(--dimmed);
+                font-size: 12px;
+                font-family: var(--font-ui);
+                padding: 0;
+              "
+            >
+              Esqueceu sua senha?
+            </button>
+          </div>
+
+          <div
+            v-if="forgotMode"
+            style="margin-top: 14px; text-align: center"
+          >
+            <button
+              type="button"
+              @click="exitForgotMode"
+              style="
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: var(--dimmed);
+                font-size: 12px;
+                font-family: var(--font-ui);
+                padding: 0;
+              "
+            >
+              Voltar ao login
+            </button>
+          </div>
         </div>
       </div>
     </div>

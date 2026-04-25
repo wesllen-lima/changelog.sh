@@ -7,11 +7,17 @@ const user = ref<User | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const magicLinkEnabled = ref<boolean | null>(null)
+const passwordResetEnabled = ref<boolean | null>(null)
 
 async function fetchConfig(): Promise<void> {
   if (magicLinkEnabled.value !== null) return
-  const result = await api.get<{ magicLinkEnabled: boolean }>('/api/config')
-  if (result.ok) magicLinkEnabled.value = result.data.magicLinkEnabled
+  const result = await api.get<{ magicLinkEnabled: boolean; passwordResetEnabled: boolean }>(
+    '/api/config',
+  )
+  if (result.ok) {
+    magicLinkEnabled.value = result.data.magicLinkEnabled
+    passwordResetEnabled.value = result.data.passwordResetEnabled
+  }
 }
 
 export function useAuth(): {
@@ -19,8 +25,11 @@ export function useAuth(): {
   loading: Readonly<typeof loading>
   error: Readonly<typeof error>
   magicLinkEnabled: Readonly<typeof magicLinkEnabled>
+  passwordResetEnabled: Readonly<typeof passwordResetEnabled>
   signIn: (email: string, password: string) => Promise<void>
   sendMagicLink: (email: string) => Promise<{ ok: boolean; error?: string }>
+  requestPasswordReset: (email: string) => Promise<{ ok: boolean; error?: string }>
+  resetPassword: (token: string, newPassword: string) => Promise<{ ok: boolean; error?: string }>
   signOut: () => Promise<void>
   fetchMe: () => Promise<
     { ok: true; data: { user: User } } | { ok: false; error: string; status: number }
@@ -73,6 +82,40 @@ export function useAuth(): {
     }
   }
 
+  async function requestPasswordReset(email: string): Promise<{ ok: boolean; error?: string }> {
+    loading.value = true
+    error.value = null
+    try {
+      const redirectTo = `${window.location.origin}/auth/reset-password`
+      const result = await api.post('/api/auth/forget-password', { email, redirectTo })
+      if (!result.ok) {
+        error.value = result.error
+        return { ok: false, error: result.error }
+      }
+      return { ok: true }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<{ ok: boolean; error?: string }> {
+    loading.value = true
+    error.value = null
+    try {
+      const result = await api.post('/api/auth/reset-password', { token, newPassword })
+      if (!result.ok) {
+        error.value = result.error
+        return { ok: false, error: result.error }
+      }
+      return { ok: true }
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function signOut(): Promise<void> {
     await api.post('/api/auth/sign-out')
     user.value = null
@@ -84,8 +127,11 @@ export function useAuth(): {
     loading: readonly(loading),
     error: readonly(error),
     magicLinkEnabled: readonly(magicLinkEnabled),
+    passwordResetEnabled: readonly(passwordResetEnabled),
     signIn,
     sendMagicLink,
+    requestPasswordReset,
+    resetPassword,
     signOut,
     fetchMe,
     fetchConfig,

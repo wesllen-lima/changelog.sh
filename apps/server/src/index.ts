@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { config } from './config'
 import { db } from './db'
 import { users } from './db/schema'
-import { auth, magicLinkEnabled } from './auth'
+import { auth, magicLinkEnabled, passwordResetEnabled } from './auth'
 import { errorHandler } from './middleware/error'
 import { corsMiddleware } from './middleware/cors'
 import { rateLimit } from './middleware/rate-limit'
@@ -39,7 +39,7 @@ app.get('/health', (c) =>
 )
 
 // Public config — lets the dashboard know which features are available
-app.get('/api/config', (c) => c.json({ magicLinkEnabled }))
+app.get('/api/config', (c) => c.json({ magicLinkEnabled, passwordResetEnabled }))
 
 // Auth routes — bypass Better Auth CSRF by calling internal API directly
 // Rate-limited: 10 attempts per minute per IP
@@ -50,6 +50,17 @@ app.post('/api/auth/sign-in/email', rateLimit(10, 60_000), async (c) => {
 
 app.post('/api/auth/sign-out', async (c) => {
   return auth.api.signOut({ headers: c.req.raw.headers, asResponse: true })
+})
+
+app.post('/api/auth/forget-password', rateLimit(5, 60_000), async (c) => {
+  if (!passwordResetEnabled) return c.json({ error: 'Password reset not configured' }, 501)
+  const body = await c.req.json<{ email: string; redirectTo: string }>()
+  return auth.api.forgetPassword({ body, asResponse: true })
+})
+
+app.post('/api/auth/reset-password', async (c) => {
+  const body = await c.req.json<{ newPassword: string; token: string }>()
+  return auth.api.resetPassword({ body, asResponse: true })
 })
 
 app.post('/api/auth/magic-link/send', rateLimit(5, 60_000), async (c) => {

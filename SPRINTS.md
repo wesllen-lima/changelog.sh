@@ -136,7 +136,7 @@ O widget (`packages/widget/src/index.ts`) está funcional mas básico. Lacunas i
 
 Lacunas identificadas em `apps/server/src/`:
 
-- [ ] **Paginação** — `listEntries` retorna tudo sem limit/offset; projetos com muitas entries vão degradar performance e o widget já limita a 5 no cliente
+- [x] **Paginação** — `getEntries` retorna `{ items, total }` com `limit` (default 100), `offset` e `q` (LIKE search); dashboard tem "Load more" e busca server-side com debounce
 - [x] **Rate limiting** — middleware de sliding window in-memory; 10/min em sign-in, 5/min em magic-link
 - [x] **Duplicar entry** — `POST /api/entries/:id/duplicate` implementado (query + service + rota + dashboard)
 - [ ] **Reordenar entries** — publishedAt é imutável após publish; sem forma de ajustar a ordem de exibição
@@ -149,11 +149,11 @@ Lacunas identificadas em `apps/server/src/`:
 
 ## Backlog — Auth / Segurança (prioridade média)
 
-- [ ] **Password reset** — Better Auth suporta, mas não está configurado nem exposto no dashboard
+- [x] **Password reset** — `sendResetPassword` via Resend quando `RESEND_API_KEY` configurado; `POST /api/auth/forget-password` + `/reset-password`; "Esqueceu a senha?" no login; `/auth/reset-password` view com token na query string
 - [ ] **Email verification** — campo `emailVerified` existe no schema mas nunca é checado; qualquer email pode logar sem verificar
-- [ ] **Rotação de API keys** — só há `DELETE`; adicionar `POST /api/keys/:id/rotate` que revoga e cria em uma operação atômica
+- [x] **Rotação de API keys** — `POST /api/keys/:id/rotate` implementado (revoga + cria atomicamente)
 - [ ] **Audit log** — sem registro de ações (quem publicou, quem deletou); relevante para multi-usuário futuro
-- [ ] **CORS restritivo em produção** — `ALLOWED_ORIGIN` já existe mas não há validação que impeça `*` em `NODE_ENV=production`
+- [x] **CORS restritivo em produção** — Zod `.superRefine()` bloqueia `ALLOWED_ORIGIN=*` em `NODE_ENV=production` na inicialização
 
 ---
 

@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull } from 'drizzle-orm'
+import { and, count, desc, eq, isNotNull, like } from 'drizzle-orm'
 import { newId } from '../../lib/id'
 import { entries } from '../schema'
 import type { DrizzleDb } from '../index'
@@ -30,18 +30,33 @@ function toEntry(row: EntryRow): Entry {
   return { ...row, tags }
 }
 
+export type PaginatedEntries = { items: Entry[]; total: number }
+
 export async function getEntries(
   db: DrizzleDb,
   projectId: string,
-  opts: { limit?: number; publishedOnly?: boolean } = {},
-): Promise<Entry[]> {
-  const where = opts.publishedOnly
+  opts: { limit?: number; offset?: number; publishedOnly?: boolean; q?: string } = {},
+): Promise<PaginatedEntries> {
+  const { limit = 100, offset = 0, publishedOnly = false, q } = opts
+
+  const statusWhere = publishedOnly
     ? and(eq(entries.projectId, projectId), isNotNull(entries.publishedAt))
     : eq(entries.projectId, projectId)
 
-  const q = db.select().from(entries).where(where).orderBy(desc(entries.createdAt))
-  const rows = await (opts.limit ? q.limit(opts.limit) : q)
-  return rows.map(toEntry)
+  const where = q ? and(statusWhere, like(entries.title, `%${q}%`)) : statusWhere
+
+  const [countRow] = await db.select({ total: count() }).from(entries).where(where)
+  const total = countRow?.total ?? 0
+
+  const rows = await db
+    .select()
+    .from(entries)
+    .where(where)
+    .orderBy(desc(entries.createdAt))
+    .limit(limit)
+    .offset(offset)
+
+  return { items: rows.map(toEntry), total }
 }
 
 export async function getEntry(db: DrizzleDb, id: string): Promise<Entry | null> {

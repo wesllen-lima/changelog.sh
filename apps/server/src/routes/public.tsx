@@ -12,8 +12,8 @@ app.get('/:slug/rss.xml', async (c) => {
   const projectResult = await getProjectBySlug(slug)
   if (!projectResult.ok) return c.text('Not Found', 404)
 
-  const entriesResult = await listEntries(slug, { publishedOnly: true })
-  const entries = entriesResult.ok ? entriesResult.data : []
+  const entriesResult = await listEntries(slug, { publishedOnly: true, limit: 500 })
+  const entries = entriesResult.ok ? entriesResult.data.items : []
 
   const origin = new URL(c.req.url).origin
   const project = projectResult.data
@@ -56,8 +56,8 @@ app.get('/:slug', async (c) => {
   const projectResult = await getProjectBySlug(slug)
   if (!projectResult.ok) return c.text('Not Found', 404)
 
-  const entriesResult = await listEntries(slug, { publishedOnly: true })
-  const entries = entriesResult.ok ? entriesResult.data : []
+  const entriesResult = await listEntries(slug, { publishedOnly: true, limit: 500 })
+  const entries = entriesResult.ok ? entriesResult.data.items : []
 
   const project = projectResult.data
   const origin = new URL(c.req.url).origin

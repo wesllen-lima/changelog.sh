@@ -26,6 +26,7 @@ const createSchema = z.object({
 
 const updateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
+  slug: z.string().min(1).max(60).optional(),
   description: z.string().max(500).nullable().optional(),
   accentColor: z
     .string()
@@ -60,7 +61,7 @@ projectRoutes.patch('/:id', async (c) => {
   if (!parsed.success) return c.json({ error: parsed.error.format() }, 422)
 
   const result = await updateProjectForUser(c.get('userId'), c.req.param('id'), parsed.data)
-  if (!result.ok) return c.json({ error: result.error }, result.status as 404)
+  if (!result.ok) return c.json({ error: result.error }, result.status as 404 | 409 | 422)
   return c.json(result.data)
 })
 

@@ -11,6 +11,7 @@ import {
   type Entry,
   type NewEntry,
   type EntryUpdate,
+  type PaginatedEntries,
 } from '../db/queries/entries'
 import { getProjectsByOwner } from '../db/queries/projects'
 import { getProject } from '../db/queries/projects'
@@ -18,8 +19,8 @@ import { ok, err, type Result } from '../lib/result'
 
 export async function listEntries(
   projectSlug: string,
-  opts: { publishedOnly?: boolean; limit?: number } = {},
-): Promise<Result<Entry[]>> {
+  opts: { publishedOnly?: boolean; limit?: number; offset?: number; q?: string } = {},
+): Promise<Result<PaginatedEntries>> {
   const project = await getProject(db, projectSlug)
   if (!project) return err('Project not found', 404)
   const data = await getEntries(db, project.id, opts)

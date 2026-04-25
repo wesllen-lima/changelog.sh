@@ -20,7 +20,7 @@ export function useProjects(): {
   }) => Promise<Result<Project>>
   updateProject: (
     id: string,
-    payload: Partial<Pick<Project, 'name' | 'description' | 'accentColor'>> & {
+    payload: Partial<Pick<Project, 'name' | 'slug' | 'description' | 'accentColor'>> & {
       customTags?: CustomTag[]
     },
   ) => Promise<Result<Project>>
@@ -60,7 +60,7 @@ export function useProjects(): {
 
   async function updateProject(
     id: string,
-    payload: Partial<Pick<Project, 'name' | 'description' | 'accentColor'>> & {
+    payload: Partial<Pick<Project, 'name' | 'slug' | 'description' | 'accentColor'>> & {
       customTags?: CustomTag[]
     },
   ): Promise<Result<Project>> {

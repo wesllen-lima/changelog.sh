@@ -48,8 +48,9 @@ describe('GET /api/projects/:slug/entries', () => {
   it('lists entries with session auth', async () => {
     const res = await app.request('/api/projects/acme/entries', { headers: sessionHeaders(USER_A) })
     expect(res.status).toBe(200)
-    const body = (await res.json()) as Array<{ id: string }>
-    expect(body.some((e) => e.id === draft.id)).toBe(true)
+    const body = (await res.json()) as { items: Array<{ id: string }>; total: number }
+    expect(body.items.some((e) => e.id === draft.id)).toBe(true)
+    expect(body.total).toBeGreaterThan(0)
   })
 
   it('lists only published entries with ?published=true', async () => {
@@ -57,8 +58,9 @@ describe('GET /api/projects/:slug/entries', () => {
       headers: sessionHeaders(USER_A),
     })
     expect(res.status).toBe(200)
-    const body = (await res.json()) as unknown[]
-    expect(body.length).toBe(0)
+    const body = (await res.json()) as { items: unknown[]; total: number }
+    expect(body.items.length).toBe(0)
+    expect(body.total).toBe(0)
   })
 
   it('returns 404 for unknown project', async () => {

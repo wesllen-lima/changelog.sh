@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import TagPill from '../components/TagPill.vue'
@@ -12,6 +12,7 @@ import type { Entry } from '@changelog/types'
 const router = useRouter()
 const {
   entries,
+  total,
   loading,
   fetchEntries,
   deleteEntry,
@@ -25,25 +26,38 @@ const toast = useToast()
 const filter = ref<'all' | 'published' | 'draft'>('all')
 const search = ref('')
 const confirmDeleteId = ref<string | null>(null)
+let searchTimer: ReturnType<typeof setTimeout> | null = null
 
-const filtered = computed(() => {
-  let list = entries.value
-  if (filter.value === 'published') list = list.filter((e) => e.publishedAt !== null)
-  else if (filter.value === 'draft') list = list.filter((e) => e.publishedAt === null)
-  if (search.value.trim()) {
-    const q = search.value.toLowerCase()
-    list = list.filter((e) => e.title.toLowerCase().includes(q))
-  }
-  return list
-})
+const filtered = computed(() =>
+  filter.value === 'draft' ? entries.value.filter((e) => e.publishedAt === null) : entries.value,
+)
 
 const counts = computed(() => ({
-  all: entries.value.length,
+  all: total.value,
   published: entries.value.filter((e) => e.publishedAt !== null).length,
   draft: entries.value.filter((e) => e.publishedAt === null).length,
 }))
 
-function relativeDate(iso: string) {
+const hasMore = computed(() => entries.value.length < total.value)
+
+function doFetch(slug: string): void {
+  fetchEntries(slug, {
+    publishedOnly: filter.value === 'published',
+    q: search.value.trim() || undefined,
+  })
+}
+
+async function loadMore(): Promise<void> {
+  if (!current.value || loading.value || !hasMore.value) return
+  await fetchEntries(current.value.slug, {
+    publishedOnly: filter.value === 'published',
+    q: search.value.trim() || undefined,
+    offset: entries.value.length,
+    append: true,
+  })
+}
+
+function relativeDate(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const d = Math.floor(diff / 86400000)
   if (d === 0) return 'Today'
@@ -52,13 +66,13 @@ function relativeDate(iso: string) {
   return new Date(iso).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-async function handleDelete(id: string) {
+async function handleDelete(id: string): Promise<void> {
   await deleteEntry(id)
   confirmDeleteId.value = null
   toast.success('Entry deleted')
 }
 
-async function handleTogglePublish(entry: Entry) {
+async function handleTogglePublish(entry: Entry): Promise<void> {
   if (entry.publishedAt) {
     await unpublishEntry(entry.id)
     toast.info('Entry moved to drafts')
@@ -69,11 +83,26 @@ async function handleTogglePublish(entry: Entry) {
 }
 
 onMounted(() => {
-  if (current.value) fetchEntries(current.value.slug)
+  if (current.value) doFetch(current.value.slug)
 })
 
 watch(current, (p) => {
-  if (p) fetchEntries(p.slug)
+  if (p) doFetch(p.slug)
+})
+
+watch(filter, () => {
+  if (current.value) doFetch(current.value.slug)
+})
+
+watch(search, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    if (current.value) doFetch(current.value.slug)
+  }, 300)
+})
+
+onUnmounted(() => {
+  if (searchTimer) clearTimeout(searchTimer)
 })
 </script>
 
@@ -703,6 +732,51 @@ watch(current, (p) => {
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Load more -->
+      <div
+        v-if="hasMore && !loading"
+        style="margin-top: 14px; display: flex; justify-content: center"
+      >
+        <button
+          @click="loadMore"
+          style="
+            padding: 7px 18px;
+            border: 1px solid var(--border-md);
+            border-radius: var(--r-sm);
+            background: var(--surface);
+            font-size: 13px;
+            font-family: var(--font-ui);
+            color: var(--muted);
+            cursor: pointer;
+            box-shadow: var(--sh-sm);
+          "
+          @mouseover="
+            (e) => {
+              ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--border-dk)'
+              ;(e.currentTarget as HTMLElement).style.color = 'var(--text)'
+            }
+          "
+          @mouseleave="
+            (e) => {
+              ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--border-md)'
+              ;(e.currentTarget as HTMLElement).style.color = 'var(--muted)'
+            }
+          "
+        >
+          Load more
+          <span
+            style="
+              font-family: var(--font-mono);
+              font-size: 11px;
+              margin-left: 6px;
+              color: var(--dimmed);
+            "
+          >
+            {{ entries.length }} / {{ total }}
+          </span>
+        </button>
       </div>
     </div>
   </AppLayout>

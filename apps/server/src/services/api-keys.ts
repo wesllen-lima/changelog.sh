@@ -42,3 +42,22 @@ export async function revokeKeyForUser(userId: string, keyId: string): Promise<R
   revokeApiKey(db, keyId)
   return ok(undefined)
 }
+
+export async function rotateKeyForUser(
+  userId: string,
+  keyId: string,
+): Promise<Result<{ key: string; record: Omit<ApiKey, 'keyHash'> }>> {
+  const owned = await getProjectsByOwner(db, userId)
+  const ownerProjectIds = new Set(owned.map((p) => p.id))
+
+  const keys = await Promise.all(owned.map((p) => listApiKeys(db, p.id)))
+  const allKeys = keys.flat()
+  const target = allKeys.find((k) => k.id === keyId && ownerProjectIds.has(k.projectId))
+
+  if (!target) return err('API key not found', 404)
+
+  revokeApiKey(db, keyId)
+  const { key, record } = createApiKey(db, target.projectId, target.label)
+  const { keyHash: _keyHash, ...rest } = record
+  return ok({ key, record: rest })
+}

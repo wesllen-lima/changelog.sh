@@ -27,7 +27,10 @@ const entryRoutes = new Hono<{ Variables: AuthVariables }>()
 
 entryRoutes.get('/projects/:slug/entries', requireAuth, async (c) => {
   const publishedOnly = c.req.query('published') === 'true'
-  const result = await listEntries(c.req.param('slug'), { publishedOnly })
+  const limit = parseInt(c.req.query('limit') ?? '100', 10)
+  const offset = parseInt(c.req.query('offset') ?? '0', 10)
+  const q = c.req.query('q') || undefined
+  const result = await listEntries(c.req.param('slug'), { publishedOnly, limit, offset, q })
   if (!result.ok) return c.json({ error: result.error }, result.status as 404)
   return c.json(result.data)
 })

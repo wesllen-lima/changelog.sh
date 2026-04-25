@@ -2,15 +2,28 @@ import { ref, readonly } from 'vue'
 import { api } from './useApi'
 import type { Entry, Result } from '@changelog/types'
 
+type PaginatedEntries = { items: Entry[]; total: number }
+
 const entries = ref<Entry[]>([])
+const total = ref(0)
 const loading = ref(false)
 const error = ref<string | null>(null)
 
 export function useEntries(): {
   entries: Readonly<typeof entries>
+  total: Readonly<typeof total>
   loading: Readonly<typeof loading>
   error: Readonly<typeof error>
-  fetchEntries: (slug: string, publishedOnly?: boolean) => Promise<void>
+  fetchEntries: (
+    slug: string,
+    opts?: {
+      publishedOnly?: boolean
+      limit?: number
+      offset?: number
+      q?: string
+      append?: boolean
+    },
+  ) => Promise<void>
   createEntry: (
     slug: string,
     payload: { title: string; body: string; tags?: string[] },
@@ -24,14 +37,30 @@ export function useEntries(): {
   deleteEntry: (id: string) => Promise<Result<undefined>>
   duplicateEntry: (id: string) => Promise<Result<Entry>>
 } {
-  async function fetchEntries(slug: string, publishedOnly = false): Promise<void> {
+  async function fetchEntries(
+    slug: string,
+    opts: {
+      publishedOnly?: boolean
+      limit?: number
+      offset?: number
+      q?: string
+      append?: boolean
+    } = {},
+  ): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      const qs = publishedOnly ? '?published=true' : ''
-      const result = await api.get<Entry[]>(`/api/projects/${slug}/entries${qs}`)
+      const params = new URLSearchParams()
+      if (opts.publishedOnly) params.set('published', 'true')
+      if (opts.limit !== undefined) params.set('limit', String(opts.limit))
+      if (opts.offset !== undefined) params.set('offset', String(opts.offset))
+      if (opts.q) params.set('q', opts.q)
+      const qs = params.size > 0 ? `?${params.toString()}` : ''
+      const result = await api.get<PaginatedEntries>(`/api/projects/${slug}/entries${qs}`)
       if (result.ok) {
-        entries.value = result.data
+        if (opts.append) entries.value = [...entries.value, ...result.data.items]
+        else entries.value = result.data.items
+        total.value = result.data.total
       } else {
         error.value = result.error
       }
@@ -45,7 +74,10 @@ export function useEntries(): {
     payload: { title: string; body: string; tags?: string[] },
   ): Promise<Result<Entry>> {
     const result = await api.post<Entry>(`/api/projects/${slug}/entries`, payload)
-    if (result.ok) entries.value.unshift(result.data)
+    if (result.ok) {
+      entries.value.unshift(result.data)
+      total.value += 1
+    }
     return result
   }
 
@@ -81,18 +113,25 @@ export function useEntries(): {
 
   async function deleteEntry(id: string): Promise<Result<undefined>> {
     const result = await api.delete<undefined>(`/api/entries/${id}`)
-    if (result.ok) entries.value = entries.value.filter((e) => e.id !== id)
+    if (result.ok) {
+      entries.value = entries.value.filter((e) => e.id !== id)
+      total.value = Math.max(0, total.value - 1)
+    }
     return result
   }
 
   async function duplicateEntry(id: string): Promise<Result<Entry>> {
     const result = await api.post<Entry>(`/api/entries/${id}/duplicate`)
-    if (result.ok) entries.value.unshift(result.data)
+    if (result.ok) {
+      entries.value.unshift(result.data)
+      total.value += 1
+    }
     return result
   }
 
   return {
     entries: readonly(entries),
+    total: readonly(total),
     loading: readonly(loading),
     error: readonly(error),
     fetchEntries,

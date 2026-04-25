@@ -50,9 +50,20 @@ export async function updateProjectForUser(
   const rows = await getProjectsByOwner(db, userId)
   const project = rows.find((p) => p.id === id)
   if (!project) return err('Project not found', 404)
+
+  let newSlug = project.slug
+  if (data.slug !== undefined && data.slug !== project.slug) {
+    newSlug = slugify(data.slug)
+    if (!newSlug) return err('Invalid slug', 422)
+    const existing = await getProject(db, newSlug)
+    if (existing && existing.id !== id) return err('Slug already in use', 409)
+    data = { ...data, slug: newSlug }
+  }
+
   updateProject(db, id, data)
   const merged = { ...project }
   if (data.name !== undefined) merged.name = data.name
+  if (data.slug !== undefined) merged.slug = newSlug
   if (data.description !== undefined) merged.description = data.description
   if (data.accentColor !== undefined) merged.accentColor = data.accentColor
   if (data.customTags !== undefined) merged.customTags = data.customTags

@@ -19,6 +19,7 @@ export type NewProject = {
 }
 export type ProjectUpdate = {
   name?: string
+  slug?: string
   description?: string | null
   accentColor?: string
   customTags?: CustomTag[]
@@ -67,6 +68,7 @@ export function createProject(db: DrizzleDb, data: NewProject): Project {
 export function updateProject(db: DrizzleDb, id: string, data: ProjectUpdate): void {
   const set: Partial<ProjectRow> = {}
   if (data.name !== undefined) set.name = data.name
+  if (data.slug !== undefined) set.slug = data.slug
   if (data.description !== undefined) set.description = data.description
   if (data.accentColor !== undefined) set.accentColor = data.accentColor
   if (data.customTags !== undefined) set.customTags = JSON.stringify(data.customTags)

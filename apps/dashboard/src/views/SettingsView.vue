@@ -9,7 +9,8 @@ import { useToast } from '../composables/useToast'
 import type { WidgetEntry, CustomTag } from '@changelog/types'
 
 const { current, updateProject, deleteProject } = useProjects()
-const { keys, newKeyPlaintext, fetchKeys, generateKey, revokeKey, clearNewKey } = useApiKeys()
+const { keys, newKeyPlaintext, fetchKeys, generateKey, revokeKey, rotateKey, clearNewKey } =
+  useApiKeys()
 const toast = useToast()
 
 const DEFAULT_TAGS: CustomTag[] = [
@@ -90,11 +91,17 @@ async function handleSave() {
   if (!current.value || saving.value) return
   saving.value = true
   try {
-    await updateProject(current.value.id, {
+    const payload: Parameters<typeof updateProject>[1] = {
       name: form.name,
       description: form.description || null,
       accentColor: form.accentColor,
-    })
+    }
+    if (form.slug && form.slug !== current.value.slug) payload.slug = form.slug
+    const result = await updateProject(current.value.id, payload)
+    if (!result.ok) {
+      toast.error(result.error)
+      return
+    }
     saveOk.value = true
     toast.success('Settings saved')
     setTimeout(() => (saveOk.value = false), 2000)
@@ -287,7 +294,7 @@ function cancelDelete(): void {
               >
             </div>
 
-            <!-- Slug (read-only) -->
+            <!-- Slug -->
             <div>
               <label
                 style="
@@ -299,15 +306,14 @@ function cancelDelete(): void {
                 "
               >Slug</label>
               <input
-                :value="form.slug"
-                disabled
+                v-model="form.slug"
                 :style="{
                   ...inputStyle,
-                  opacity: '0.5',
-                  cursor: 'not-allowed',
                   fontFamily: 'var(--font-mono)',
                   fontSize: '13px',
                 }"
+                @focus="focusInput"
+                @blur="blurInput"
               >
               <p
                 style="
@@ -935,19 +941,42 @@ function cancelDelete(): void {
                   {{ key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : '—' }}
                 </td>
                 <td style="padding: 12px 14px; text-align: right">
-                  <button
-                    @click="revokeKey(key.id)"
-                    style="
-                      font-size: 12px;
-                      color: var(--red);
-                      background: none;
-                      border: none;
-                      cursor: pointer;
-                      font-family: var(--font-ui);
-                    "
+                  <div
+                    style="display: flex; align-items: center; gap: 10px; justify-content: flex-end"
                   >
-                    Revoke
-                  </button>
+                    <button
+                      @click="rotateKey(key.id)"
+                      style="
+                        font-size: 12px;
+                        color: var(--muted);
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        font-family: var(--font-ui);
+                      "
+                      @mouseover="
+                        (e) => ((e.currentTarget as HTMLElement).style.color = 'var(--text)')
+                      "
+                      @mouseleave="
+                        (e) => ((e.currentTarget as HTMLElement).style.color = 'var(--muted)')
+                      "
+                    >
+                      Rotate
+                    </button>
+                    <button
+                      @click="revokeKey(key.id)"
+                      style="
+                        font-size: 12px;
+                        color: var(--red);
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        font-family: var(--font-ui);
+                      "
+                    >
+                      Revoke
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>

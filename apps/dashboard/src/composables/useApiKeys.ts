@@ -15,6 +15,7 @@ export function useApiKeys(): {
   fetchKeys: (slug: string) => Promise<void>
   generateKey: (slug: string, label: string) => Promise<Result<{ key: string } & ApiKey>>
   revokeKey: (id: string) => Promise<Result<undefined>>
+  rotateKey: (id: string) => Promise<Result<{ key: string } & ApiKey>>
   clearNewKey: () => void
 } {
   async function fetchKeys(slug: string): Promise<void> {
@@ -47,6 +48,16 @@ export function useApiKeys(): {
     return result
   }
 
+  async function rotateKey(id: string): Promise<Result<{ key: string } & ApiKey>> {
+    const result = await api.post<{ key: string } & ApiKey>(`/api/keys/${id}/rotate`)
+    if (result.ok) {
+      keys.value = keys.value.filter((k) => k.id !== id)
+      keys.value.push(result.data)
+      newKeyPlaintext.value = result.data.key
+    }
+    return result
+  }
+
   function clearNewKey(): void {
     newKeyPlaintext.value = null
   }
@@ -59,6 +70,7 @@ export function useApiKeys(): {
     fetchKeys,
     generateKey,
     revokeKey,
+    rotateKey,
     clearNewKey,
   }
 }

@@ -1,7 +1,12 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { requireSession, type SessionVariables } from '../middleware/auth'
-import { listKeysForProject, createKeyForProject, revokeKeyForUser } from '../services/api-keys'
+import {
+  listKeysForProject,
+  createKeyForProject,
+  revokeKeyForUser,
+  rotateKeyForUser,
+} from '../services/api-keys'
 
 const createSchema = z.object({
   label: z.string().min(1).max(100),
@@ -31,6 +36,12 @@ apiKeyRoutes.delete('/keys/:id', async (c) => {
   const result = await revokeKeyForUser(c.get('userId'), c.req.param('id'))
   if (!result.ok) return c.json({ error: result.error }, result.status as 404)
   return c.body(null, 204)
+})
+
+apiKeyRoutes.post('/keys/:id/rotate', async (c) => {
+  const result = await rotateKeyForUser(c.get('userId'), c.req.param('id'))
+  if (!result.ok) return c.json({ error: result.error }, result.status as 404)
+  return c.json(result.data)
 })
 
 export default apiKeyRoutes

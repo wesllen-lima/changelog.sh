@@ -43,8 +43,9 @@ describe('getEntries', () => {
     createEntry(db, { projectId: PROJECT_ID, title: 'B' })
     createEntry(db, { projectId: 'other', title: 'C' })
 
-    const found = await getEntries(db, PROJECT_ID)
-    expect(found).toHaveLength(2)
+    const { items, total } = await getEntries(db, PROJECT_ID)
+    expect(items).toHaveLength(2)
+    expect(total).toBe(2)
   })
 
   test('filters to published only', async () => {
@@ -52,9 +53,9 @@ describe('getEntries', () => {
     const e2 = createEntry(db, { projectId: PROJECT_ID, title: 'Published' })
     publishEntry(db, e2.id)
 
-    const published = await getEntries(db, PROJECT_ID, { publishedOnly: true })
-    expect(published).toHaveLength(1)
-    expect(published[0].id).toBe(e2.id)
+    const { items } = await getEntries(db, PROJECT_ID, { publishedOnly: true })
+    expect(items).toHaveLength(1)
+    expect(items[0].id).toBe(e2.id)
 
     void e1
   })
@@ -64,8 +65,9 @@ describe('getEntries', () => {
     createEntry(db, { projectId: PROJECT_ID, title: 'B' })
     createEntry(db, { projectId: PROJECT_ID, title: 'C' })
 
-    const found = await getEntries(db, PROJECT_ID, { limit: 2 })
-    expect(found).toHaveLength(2)
+    const { items, total } = await getEntries(db, PROJECT_ID, { limit: 2 })
+    expect(items).toHaveLength(2)
+    expect(total).toBe(3)
   })
 
   test('orders by createdAt descending', async () => {
@@ -73,8 +75,8 @@ describe('getEntries', () => {
     await new Promise((r) => setTimeout(r, 2))
     createEntry(db, { projectId: PROJECT_ID, title: 'Second' })
 
-    const found = await getEntries(db, PROJECT_ID)
-    expect(found[0].title).toBe('Second')
+    const { items } = await getEntries(db, PROJECT_ID)
+    expect(items[0].title).toBe('Second')
   })
 })
 
